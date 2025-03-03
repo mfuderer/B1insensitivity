@@ -7,7 +7,7 @@ This collection consists of the following elements:
 - Generation of figures from the reconstructed data
 
 ## Generation of flip-angle sequences 
-This is done by running the script sequenceGeneration.
+This is done by running the sequenceGenerationScript.
 Note that, within the script, one has to manually cycle the variable "case" from 1 to 4. 
 The processing time is vastly different between case=1 (Amplitude-only noise-optimized), which may take a minute, and case=4 (Amplitude+Phase, B1-opt), which may take up to a day.
 The results should appear in the folder RFsequences (well, they are actually there, but if you want to reproduce these, you can move them to another location and generate them again using the script).
