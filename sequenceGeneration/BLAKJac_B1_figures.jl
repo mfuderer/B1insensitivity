@@ -21,12 +21,6 @@ function map_B1_sensitivities(fn_base,nShownRealizations)
         RFdeg = RF_from_file(recon_options["nTR"], recon_options["nky"])
         BLAKJac.PlotAmplAndPhaseDeriv(RFdeg, ax[i])
 
-        # ax[i].plot(abs.(RFdeg))
-        # anglesdd = zeros(length(RFdeg))
-        # for i in 1:length(RFdeg)-2
-        #     anglesdd[i] = (rad2deg(angle(conj(RFdeg[i])*RFdeg[i+1]*RFdeg[i+1]*conj(RFdeg[i+2])))+270.0) % 180.0 -90.0
-        # end
-        # ax[i].plot(anglesdd)
         noises, ItotAll, b1f = BLAKJac.BLAKJac_analysis!(cpu, RFdeg, trajectorySet, recon_options, saved_H) 
         @show fn, noises
     end
@@ -40,14 +34,6 @@ function map_B1_sensitivities(fn_base,nShownRealizations)
         RFdeg = RF_from_file(recon_options["nTR"], recon_options["nky"])
         BLAKJac.PlotAmplAndPhaseDeriv(RFdeg, ax[rrr,1])
 
-        # ax[rrr,1].plot(abs.(RFdeg))
-        # anglesdd = zeros(length(RFdeg))
-        # for i in 1:length(RFdeg)-2
-
-        #     anglesdd[i] = (rad2deg(angle(conj(RFdeg[i])*RFdeg[i+1]*RFdeg[i+1]*conj(RFdeg[i+2])))+270.0) % 180.0 -90.0
-        # end
-        # ax[rrr,1].plot(anglesdd)
-        #
         for (i1,lt1) in enumerate(lt1_range)
             for (i2,lt2) in enumerate(lt2_range)
                 recon_options["T1T2set"] =[(t1c*exp(lt1),t2c*exp(lt2))] 
@@ -92,14 +78,6 @@ function map_B1_sensitivities(fn_base,nShownRealizations)
         ax[rrr,1].set_ylim(-10,100)
         BLAKJac.PlotAmplAndPhaseDeriv(RFdeg, ax[rrr,1])
 
-        # ax[rrr,1].set_ylim(-10,100)
-        # ax[rrr,1].plot(abs.(RFdeg))
-        # anglesdd = zeros(length(RFdeg))
-        # for i in 1:length(RFdeg)-2
-        #     anglesdd[i] = (rad2deg(angle(conj(RFdeg[i])*RFdeg[i+1]*RFdeg[i+1]*conj(RFdeg[i+2])))+270.0) % 180.0 -90.0
-        # end
-        # ax[rrr,1].plot(anglesdd)
-        #
         (t1app,dummy) = appliedT1T2mix[1]
         for (i1,b1) in enumerate(b1_range)
             for (i2,lt2) in enumerate(lt2_range)
@@ -130,7 +108,6 @@ function map_B1_sensitivities(fn_base,nShownRealizations)
         ax[rrr,2].set_yticks([0,len1-1],[@sprintf("%.1f", b1_range[1]), @sprintf("%.1f", b1_range[end])])
         ax[rrr,2].text(-5,18,"B1")
 
-        #t1SetRescaled = [(log(t1/t1c)+1.4)*10+1 for (t1,t2) in appliedT1T2mix]
         b1centers = [(0+1.4)*10+1 for (t1,t2) in defaultT1T2mix]
         t2SetRescaled = [(log(t2/t2c)+1.4  )*10+1 for (t1,t2) in defaultT1T2mix]
         ax[1,2].scatter(t2SetRescaled,b1centers,color="orange")

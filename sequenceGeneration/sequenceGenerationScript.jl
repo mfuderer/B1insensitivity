@@ -24,36 +24,31 @@ recon_options["TR"]      = 0.01
 recon_options["startstate"] = -1 
 recon_options["sigma_ref"] = 1.4 # See logbook 20220815
 recon_options["optpars"]   = Optim.Options(time_limit = 20000.0, iterations = 100000, f_tol=1.0e-5, g_tol = 1.0e-5)  
-# @warn "debugging" 
-# recon_options["optpars"]   = Optim.Options(time_limit = 20.0, iterations = 100000, f_tol=1.0e-5, g_tol = 1.0e-5)  
 
 recon_options["opt_criterion"] = "noise_level" 
 recon_options["account_SAR"]   = true     
 
 recon_options["sar_limit"] = 40^2/0.01 
 recon_options["emphasize_low_freq"] = true 
-recon_options["handleB1"] = b1handling[case] # "no" # "sensitivity" # "no" # "sensitivity" #
+recon_options["handleB1"] = b1handling[case]
 recon_options["lambda_B1"] = 10.0     
 recon_options["opt_initialize"] = "cRandom30" 
 recon_options["opt_focus"] = "max"      
 recon_options["opt_complex"] = false      
 recon_options["opt_account_maxFlip"] = false
 recon_options["opt_keep_positive"] = false                           
-recon_options["opt_slow_phase"] = qPhase[case] # false # true                         
+recon_options["opt_slow_phase"] = qPhase[case]                      
 recon_options["considerCyclic"] = false  
-recon_options["opt_emergeCriterion"] = 500 # 2000 # 500 # 2000
+recon_options["opt_emergeCriterion"] = 500 
 ph = [] 
-# ph = zeros(nTR); ph .= 2.0;
 recon_options["opt_imposed_2nd_derivative_of_phase"] = ph
 recon_options["opt_iterations_limit"] = 1
 recon_options["sizeSteps"] = [6]  
-recon_options["B1metric"] = "multi_point_values" # "multi_point"         
+recon_options["B1metric"] = "multi_point_values"         
 nRealizations = 10  
-# nRealizations = 1 ; @warn "temporary debugging line, has to be removed later" 
 recon_options["rfFolder"]= "./RFsequences/"    
 
 fn_base = caseName[case]
-# fn_base = "temp"; @warn "temporary debugging line, has to be removed later"
 for i in 1:nRealizations; goodseed = i
     stageText = ""
     portionRange = 0:0
@@ -91,4 +86,4 @@ for rrr in 1:Nr
     scatter(10*b1f[3],rrr, color="green")
 end
 scatter(optscore, winner, color="red", s=100)
-@printf("Ant the winning sequence is ... %d \n", winner)
+@printf("And the winning sequence is ... %d \n", winner)
