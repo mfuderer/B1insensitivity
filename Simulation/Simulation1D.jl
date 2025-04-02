@@ -25,7 +25,8 @@ PyPlot.rc("font", family="serif")
 PyPlot.rc("font", size=14)
 
 # resource = has_cuda_gpu() ? CUDALibs() : CPU1()
-recon_options = load_default_recon_options();
+# recon_options = load_default_recon_options();
+recon_options = Dict()
 
 recon_options["recon_folder"] = "tmp";
 recon_options["recon_subfolder"] = "tmp";
@@ -118,7 +119,7 @@ lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
 
 # MRSTATToolbox can use options loaded from file. 
 #    Oscar set them to something that looked useful for pure simulation stuff but please double-check
-options = load_options_from_file(pwd()*"/scripts/mrstat_options_in_silico.toml")      
+options = load_options_from_file(pwd()*"/mrstat_options_in_silico.toml")      
 
 slopes = zeros(length(cases))
 for (caseIndex,case) in enumerate(cases)

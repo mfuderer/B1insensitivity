@@ -13,7 +13,7 @@ using MRSTATToolbox
 # using MAT
 # using Serialization
 # using StaticArrays, StructArrays
-# using Random
+using Random
 # using FFTW, FourierTools
 # using Interpolations
 # using Printf

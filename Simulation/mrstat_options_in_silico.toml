@@ -1,0 +1,128 @@
+[coil_selection]
+use_subset = false
+active_subset = [1, 2, 3, 4]
+
+[computational_resource]
+resource = "gpu"
+num_threads = 1
+num_workers = 16
+
+[density_compensation]
+apply_dcf_radial = false
+filter_type_radial = "ram-lak"
+
+[espirit]
+apply_espirit = false
+ignore_first_kspace = true
+kspace_with_max_flipangle_at_k0 = true
+calibration_size = [24, 24, 24]
+
+[gradient_delay]
+apply_correction_radial = false
+method_radial = "ring"
+
+[initial_guess]
+initial_guess = [1.0, 0.05, 1.0, 0.0, 0.0, 0.0]
+use_measured_transmit_field = true
+use_measured_off_resonances = false
+
+[kspace_filter]
+apply_filter = false
+filter_width = 0.7
+filter_lift = 0.5
+
+[location_selection]
+use_subset = false
+active_subset = [1]
+
+[logger]
+name = "mrstat_in_silico.log"
+folder = ""
+
+[noise_decorrelation]
+apply_prewhitening = false
+
+[nonlinear_solver]
+to_simulate = [true, true, false, false, true, true]
+to_reconstruct = [true, true, false, false, true, true]
+lower_bounds = [0.1, 0.001, 0.6, -100.0, -inf, -inf]
+upper_bounds = [7.0, 3.0, 1.4, 100.0, +inf, +inf]
+log_scaling = [true, true, false, false, false, false]
+stepsizes_fd = [0.001, 0.001, 0.001, 0.001]
+
+[numerical_phantom]
+simulate_data = false
+phantom_type = "brainweb"
+
+[philips_import]
+coil_sensitivities_prescan_folder = ""
+transmit_field_prescan_folder = ""
+off_resonances_prescan_folder = ""
+
+[precision]
+floating_point_precision = "f32"
+cublas_fast_math = false
+internal_precision = "TensorFloat32"
+
+[proton_density_initialization]
+apply_lsqr_initialization = true
+lsqr_iterations = 10
+lsqr_verbose = false
+
+[proton_density_mask]
+proton_density_mask = false
+relative_threshold = 0.3
+threshold_per_location = false
+
+[proton_density_scaling]
+scale_with_mean = true
+apply_mask = true
+scale_per_location = false
+
+[remove_readout_oversampling]
+remove_cartesian = false
+remove_radial = false
+
+[readout_selection]
+use_all_readouts = true
+requested_readouts = -1
+
+[repetition_selection]
+average_repetitions = false
+active_repetition = 1
+
+[sense_decoupling]
+apply_sense_decoupling_in_slice_direction = false
+fista_iterations = 15
+"λ" = 0.10000000149011612
+"ρ" = 1.1234999895095825
+
+[sequences.fisp2d]
+max_state = 64
+slice_thickness_multiplier = 3
+slice_discretization = 35
+
+[sequences.fisp3d]
+max_state = 64
+
+[trust_region_reflective]
+min_ratio = 0.05
+max_iter = 20
+max_iter_steihaug = 20
+tol_steihaug = 0.1
+init_scale_radius = 0.1
+save_every_iter = false
+
+[virtual_coils]
+to_virtual_coils = false
+minimum_energy_threshold = 0.75
+
+[write_to_disk]
+write_to_disk = true
+output_folder = "mrstat_recons"
+add_timestamp = true
+description = ""
+to_nifti = true
+"save_B₁" = true
+"save_B₀" = true
+apply_mask = true
