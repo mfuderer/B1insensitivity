@@ -18,20 +18,20 @@ function sawtooth(segs, center, spread, useLog=true)
 end
 
 include("setup.jl")
-# include("WrecSimulRun.jl")
-# include("../numerical_phantom/load_data_phantom.jl");
-# include("../numerical_phantom/RF_Shapes.jl");
-PyPlot.rc("font", family="serif")
-PyPlot.rc("font", size=14)
+include("load_data_phantom.jl")
 
-# resource = has_cuda_gpu() ? CUDALibs() : CPU1()
-# recon_options = load_default_recon_options();
+# PyPlot.rc("font", family="serif")
+# PyPlot.rc("font", size=14)
+PythonPlot.rc("font", family="serif")
+PythonPlot.rc("font", size=14)
+
 recon_options = Dict()
 
 recon_options["recon_folder"] = "tmp";
 recon_options["recon_subfolder"] = "tmp";
 recon_options["numphantom"] = true;
 recon_options["numphantom_rf_shape"] = "from_file" 
+recon_options["rfFolder"]= pwd()*"/RFsequences/" # name of the folder to read the RF pattern from
 
 nky = 224
 recon_options["objectSegs"] = nky
@@ -51,6 +51,8 @@ recon_options["numphantom_trajectory"] = "Cartesian"
 recon_options["numphantom_noise"] = false
 recon_options["simulation_parameters"] = T₁T₂B₁ρˣρʸ
 recon_options["reconstruction_parameters"] = T₁T₂ρˣρʸ
+
+recon_options["TR"]      = 0.01         # in seconds     
 
 recon_options["slice"] = 1;
 recon_options["coils"] = 1; # should be a range
@@ -103,10 +105,10 @@ description         = ["noise-optimized, no phase",
                                         "B1-optimized,no phase",    
                                                           "noise-optimized, with phase",     
                                                                              "B1-optimized, with phase"]  
-cases               = ["20240702V(5)",   "20240703W(5)",  "20240701S(5)",    "20240703X(3)"]
+#cases               = ["20240702V(5)",   "20240703W(5)",  "20240701S(5)",    "20240703X(3)"]
+cases               = ["NoPhase_noise(5)", "NoPhase_B1opt(5)", "Phase_noise(5)", "Phase_B1opt(3)"]
+
 nR                  = [1,                1,               1,                  1]
-# cases               = ["20240702V"   ,  "20240703W"   ,  "20240701S",       "20240703X"]
-# nR                  = [10,              10,              10,                 10] 
 
 sweeps              = 6
 startstate          = -1
@@ -114,12 +116,12 @@ mbiasT1 = zeros(length(cases),nrSegments)
 mbiasT2 = zeros(length(cases),nrSegments)
 mT2     = zeros(length(cases),nrSegments)
 
-lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
+# lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
 (figd,axd)=subplots(1,figsize=(8,5))
 
 # MRSTATToolbox can use options loaded from file. 
 #    Oscar set them to something that looked useful for pure simulation stuff but please double-check
-options = load_options_from_file(pwd()*"/mrstat_options_in_silico.toml")      
+# options = load_options_from_file(pwd()*"/mrstat_options_in_silico.toml")      
 
 slopes = zeros(length(cases))
 for (caseIndex,case) in enumerate(cases)
@@ -168,8 +170,11 @@ for (caseIndex,case) in enumerate(cases)
  
         # Call the MRSTAT reconstruction function
         # Note that this should be run on a machine with GPU 
-        ctx = MRSTATToolbox.MRSTAT.mrstat_recon_in_silico(sequence, trajectory, raw_data, coordinates, coil_sensitivities, transmit_field, options);
- 
+        # ctx = MRSTATToolbox.MRSTAT.mrstat_recon_in_silico(sequence, trajectory, raw_data, coordinates, coil_sensitivities, transmit_field, options);
+        ctx = MRSTAT.mrstat_recon(raw_data, sequence, coordinates, coil_sensitivities, trajectory; intermediate_plots=false);
+
+
+
         # Extract the reconstructed T₁ and T₂ maps from the returned ctx object
         recon_res = (
             # ctx.reconstructed.T₁ has multiple named dimensions and resides on the 
