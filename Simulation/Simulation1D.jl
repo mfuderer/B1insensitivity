@@ -128,49 +128,53 @@ for (caseIndex,case) in enumerate(cases)
         recon_options["simulation_parameters"] = T₁T₂B₁ρˣρʸ
 
         # Set all the things to single precision
-        sequence = f32(sequence)
-        trajectory = f32(trajectory)
-        coilmaps = f32(reshape(only.(coilmaps), length(coilmaps),1))
-        trajectory = f32(trajectory)
-        parameters_with_B1 = f32(StructVector(parameters_with_B1))
-        coordinates = StructVector(f32(coordinates))
+        sequence = f32(sequence) |> gpu
+        trajectory = f32(trajectory) |> gpu
+        coilmaps = f32(reshape(only.(coilmaps), length(coilmaps),1)) |> gpu 
+        trajectory = f32(trajectory) |> gpu 
+        parameters_with_B1 = f32(parameters_with_B1) |> vec |> gpu
+        coordinates = StructVector(f32(coordinates)) |> gpu |> vec
+        transmit_field = simB1 |> f32 |> vec
+
+        @show typeof(coilmaps), size(coilmaps), size(parameters_with_B1)
 
         # Rather than generating echos, applying phase encoding and then calling the Mv function, we can directly call simulate_signal from BlochSimulators. 
         # Running this on the CPU (multi-threaded) for now since it doesn't take long anyway. 
         # For 2D experiments it's a different story.
-        raw_data = simulate_signal(CPUThreads(), sequence, parameters_with_B1, trajectory, coordinates, coilmaps)
+
+        raw_data = simulate_signal(CUDALibs(), sequence, parameters_with_B1, trajectory, coordinates, coilmaps)
        
         # All arguments should be of the same floating point precision, let's just do Float32 using BlochSimulators.f32's function        
         # The arrays also need to have a specific number of dimensions, add missing dimensions with size 1
         # For raw data: get data back to CPU, add "locations" and "repetitions" dimensions and convert to Float32
-        raw_data = reshape(raw_data, size(raw_data)..., 1, 1)
+        # raw_data = reshape(raw_data, size(raw_data)..., 1, 1)
         
-        # For coordinates: Store as StructArray{<:Coordinates}, add "x", "z" and "locations" dimensions
-        coordinates = reshape(coordinates, 1, length(coordinates), 1, 1)
+        # # For coordinates: Store as StructArray{<:Coordinates}, add "x", "z" and "locations" dimensions
+        # coordinates = reshape(coordinates, 1, length(coordinates), 1, 1)
         
         # For coil sensitivity maps: Add "x", "z" and "locations" dimensions
         @assert size(coilmaps, 2) == 1
-        coil_sensitivities = reshape(coilmaps, 1, length(coilmaps), 1, 1, 1)
+        # coil_sensitivities = reshape(coilmaps, 1, length(coilmaps), 1, 1, 1)
  
-        # For transmit field: Add "x", "z" and "locations" dimensions
-        transmit_field = reshape(complex.(parameters_with_B1.B₁), 1, length(coordinates), 1, 1)
+        # # For transmit field: Add "x", "z" and "locations" dimensions
+        # transmit_field = reshape(complex.(parameters_with_B1.B₁), 1, length(coordinates), 1, 1)
  
         recon_options["simulation_parameters"] = T₁T₂ρˣρʸ
  
         # Call the MRSTAT reconstruction function
         # Note that this should be run on a machine with GPU 
         # ctx = MRSTATToolbox.MRSTAT.mrstat_recon_in_silico(sequence, trajectory, raw_data, coordinates, coil_sensitivities, transmit_field, options);
-        ctx = MRSTAT.mrstat_recon(raw_data, sequence, coordinates, coil_sensitivities, trajectory; intermediate_plots=false);
+        ctx = MRSTAT.mrstat_recon(raw_data, sequence, coordinates, coilmaps, trajectory, transmit_field);
 
-
+        final_optimpars = reshape(ctx.x[:,end], :, 4)
 
         # Extract the reconstructed T₁ and T₂ maps from the returned ctx object
         recon_res = (
             # ctx.reconstructed.T₁ has multiple named dimensions and resides on the 
             # with parent we get rid of the dimension names, with collect we get it back to 
             # the cpu and with vec we lose the dimensions
-            T₁ = ctx.reconstructed.T₁ |> parent |> collect |> vec,
-            T₂ = ctx.reconstructed.T₂ |> parent |> collect |> vec
+            T₁ = exp.(final_optimpars[:,1]),
+            T₂ = exp.(final_optimpars[:,2]),
         )
 
         rT1 = reshape(recon_res.T₁, 1, nky)
