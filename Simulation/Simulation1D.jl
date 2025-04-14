@@ -33,19 +33,17 @@ recon_options["numphantom"] = true;
 recon_options["numphantom_rf_shape"] = "from_file" 
 recon_options["rfFolder"]= pwd()*"/RFsequences/" # name of the folder to read the RF pattern from
 
-nky = 224
-recon_options["objectSegs"] = nky
 recon_options["maxRho"]   = 1.0
 recon_options["simulationT1center"]  = 0.7 # 1.3
 recon_options["simulationT2center"]  = 0.07 # 0.2
 recon_options["simulationB1center"]  = 1.0
-crit_k                                =  0.0 
 recon_options["simulationVariable"] = "B1" # "TR/TD" # "measured from phantom"
 recon_options["simulationSpread"] = 0.3 # used 0.8 for T1 and T2, 1.3 for δ # 0.3 for B1
 recon_options["RhoVariation"]   = 0.0 
 
 recon_options["numphantom_type"] = "line" 
-recon_options["numphantom_size"] = (1,nky)
+recon_options["numphantom_size"] = (1,224)
+nkx,nky = recon_options["numphantom_size"]
 recon_options["numphantom_sequence"] = "Spoiled" 
 recon_options["numphantom_trajectory"] = "Cartesian" 
 recon_options["numphantom_noise"] = false
@@ -69,37 +67,28 @@ recon_options["scaling_factor"] = 1.0;
 #adpt(x) = MRSTAT.Reconstruction.adapt_to(resource, x)
 noplot(x; figtitle="") = println("no plotting")
 
-rng = MersenneTwister(2)
-
-nrSegments = recon_options["objectSegs"]
 spread = recon_options["simulationSpread"]
-rhoVar = recon_options["RhoVariation"]
-segsT1 = recon_options["simulationT1center"] .* ones(nrSegments)
-segsT2 = recon_options["simulationT2center"] .* ones(nrSegments)
-segsB1 = recon_options["simulationB1center"] .* ones(nrSegments)
-if recon_options["simulationVariable"]=="T1"
-    segsT1 = sawtooth(nrSegments, recon_options["simulationT1center"], spread)
-elseif recon_options["simulationVariable"]=="T2"
-    segsT2 = sawtooth(nrSegments, recon_options["simulationT2center"], spread)
-elseif recon_options["simulationVariable"]=="B1"
-    segsB1  = sawtooth(nrSegments, recon_options["simulationB1center"], spread, false)
-elseif recon_options["simulationVariable"]=="measured from phantom";
-    ; # no overwrites
-else @assert false
+simT1 = recon_options["simulationT1center"] .* ones(nkx,nky)
+simT2 = recon_options["simulationT2center"] .* ones(nkx,nky)
+simB1 = recon_options["simulationB1center"] .* ones(nkx,nky)
+for x in 1:nkx
+    if recon_options["simulationVariable"]=="T1"
+        simT1[x,:] = sawtooth(nky, recon_options["simulationT1center"], spread)
+    elseif recon_options["simulationVariable"]=="T2"
+        simT2[x,:] = sawtooth(nky, recon_options["simulationT2center"], spread)
+    elseif recon_options["simulationVariable"]=="B1"
+        simB1[x,:]  = sawtooth(nky, recon_options["simulationB1center"], spread, false)
+    elseif recon_options["simulationVariable"]=="measured from phantom";
+        ; # no overwrites
+    else @assert false
+    end
 end
 
-segsRho = [recon_options["maxRho"]*exp(im*2*pi*crit_k *i/nrSegments) for i in 1:nrSegments]
-segsMask = ones(nrSegments)
-segsRho .*= segsMask
-(xl,yl) = recon_options["numphantom_size"]
-repfac = Int64(round(yl/nrSegments))
+simRho = recon_options["maxRho"] .* ones(nkx,nky)
+simMask = ones(nkx,nky)
+simRho .*= simMask .|> Complex
 
-simRho = repeat(segsRho, inner=repfac)
-simT1  = repeat(segsT1,  inner=repfac)
-simT2  = repeat(segsT2,  inner=repfac)
-simB1  = repeat(segsB1,  inner=repfac)
-simMask =repeat(segsMask,inner=repfac)
-B₁map = ones(yl)
+B₁map = ones(nkx,nky)
 
 description         = ["noise-optimized, no phase",    
                                         "B1-optimized,no phase",    
@@ -112,9 +101,9 @@ nR                  = [1,                1,               1,                  1]
 
 sweeps              = 6
 startstate          = -1
-mbiasT1 = zeros(length(cases),nrSegments)
-mbiasT2 = zeros(length(cases),nrSegments)
-mT2     = zeros(length(cases),nrSegments)
+mbiasT1 = zeros(length(cases),nky)
+mbiasT2 = zeros(length(cases),nky)
+mT2     = zeros(length(cases),nky)
 
 # lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
 (figd,axd)=subplots(1,figsize=(8,5))
@@ -184,11 +173,11 @@ for (caseIndex,case) in enumerate(cases)
             T₂ = ctx.reconstructed.T₂ |> parent |> collect |> vec
         )
 
-        rT1 = reshape(recon_res.T₁, repfac, nrSegments)
-        rT2 = reshape(recon_res.T₂, repfac, nrSegments)
-        sT1 = reshape(simT1, repfac, nrSegments)
-        sT2 = reshape(simT2, repfac, nrSegments)
-        sB1 = reshape(simB1, repfac, nrSegments)
+        rT1 = reshape(recon_res.T₁, 1, nky)
+        rT2 = reshape(recon_res.T₂, 1, nky)
+        sT1 = reshape(simT1, 1, nky)
+        sT2 = reshape(simT2, 1, nky)
+        sB1 = reshape(simB1, 1, nky)
 
         mbiasT1[caseIndex,:] = mean(sT1.-rT1, dims=1) |> vec
         mbiasT2[caseIndex,:] = mean(sT2.-rT2, dims=1) |> vec
