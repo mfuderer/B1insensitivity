@@ -105,8 +105,10 @@ mbiasT1 = zeros(length(cases),nky)
 mbiasT2 = zeros(length(cases),nky)
 mT2     = zeros(length(cases),nky)
 
-# lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
-(figd,axd)=subplots(1,figsize=(8,5))
+lines_color_cycle = [p["color"] for p in pyplot.rcParams["axes.prop_cycle"]]
+# lines_color_cycle = 
+#     ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+_,axd=subplots(1,figsize=(8,5)); figd=gcf()
 
 # MRSTATToolbox can use options loaded from file. 
 #    Oscar set them to something that looked useful for pure simulation stuff but please double-check
@@ -164,7 +166,9 @@ for (caseIndex,case) in enumerate(cases)
         # Call the MRSTAT reconstruction function
         # Note that this should be run on a machine with GPU 
         # ctx = MRSTATToolbox.MRSTAT.mrstat_recon_in_silico(sequence, trajectory, raw_data, coordinates, coil_sensitivities, transmit_field, options);
-        ctx = MRSTAT.mrstat_recon(raw_data, sequence, coordinates, coilmaps, trajectory, transmit_field);
+        assumed_transmit = (1.0 .+ 0.0 .* simB1) |> f32 |> vec
+        ctx = MRSTAT.mrstat_recon(raw_data, sequence, coordinates, coilmaps, trajectory, assumed_transmit);
+        # ctx = MRSTAT.mrstat_recon(raw_data, sequence, coordinates, coilmaps, trajectory, transmit_field);
 
         final_optimpars = reshape(ctx.x[:,end], :, 4)
 
@@ -233,3 +237,5 @@ if recon_options["simulationVariable"]=="measured from phantom"
     axd.plot([0.0,0.02],[0.0,0.02],color="black")
 end
 @show slopes
+PythonPlot.show()
+
