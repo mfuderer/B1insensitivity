@@ -1,6 +1,5 @@
 using ComputationalResources
-#using PyPlot 
-using PythonPlot
+using PyPlot
 
 cpu  = ComputationalResources.CPU1()
 using BlochSimulators
@@ -10,4 +9,3 @@ using Statistics
 using StructArrays
 using StaticArrays
 using FileIO
-using Colors

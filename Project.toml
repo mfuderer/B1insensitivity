@@ -12,10 +12,6 @@ NIfTI = "a3a9e032-41b5-5fc4-967a-a6b7a19844d3"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
-PythonPlot = "274fc56d-3b97-40fa-a1cd-1b4a50311bf9"
 QMRIColors = "2bec176e-9e8c-4764-a62f-295118d1ec05"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
-
-[sources]
-MRSTAT = {rev = "b1_insensitivity", url = "https://github.com/oscarvanderheide/MRSTAT.jl"}

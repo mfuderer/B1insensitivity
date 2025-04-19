@@ -20,10 +20,8 @@ end
 include("setup.jl")
 include("load_data_phantom.jl")
 
-# PyPlot.rc("font", family="serif")
-# PyPlot.rc("font", size=14)
-PythonPlot.rc("font", family="serif")
-PythonPlot.rc("font", size=14)
+PyPlot.rc("font", family="serif")
+PyPlot.rc("font", size=14)
 
 recon_options = Dict()
 
@@ -105,10 +103,10 @@ mbiasT1 = zeros(length(cases),nky)
 mbiasT2 = zeros(length(cases),nky)
 mT2     = zeros(length(cases),nky)
 
-lines_color_cycle = [p["color"] for p in pyplot.rcParams["axes.prop_cycle"]]
+lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
 # lines_color_cycle = 
 #     ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
-_,axd=subplots(1,figsize=(8,5)); figd=gcf()
+figd,axd=subplots(1,figsize=(8,5))
 
 # MRSTATToolbox can use options loaded from file. 
 #    Oscar set them to something that looked useful for pure simulation stuff but please double-check
@@ -237,5 +235,4 @@ if recon_options["simulationVariable"]=="measured from phantom"
     axd.plot([0.0,0.02],[0.0,0.02],color="black")
 end
 @show slopes
-PythonPlot.show()
 
