@@ -62,7 +62,6 @@ recon_options["slice_thickness_multiplier"] = 1 # compute slice profiles from 0 
 
 recon_options["scaling_factor"] = 1.0;         
 
-#adpt(x) = MRSTAT.Reconstruction.adapt_to(resource, x)
 noplot(x; figtitle="") = println("no plotting")
 
 spread = recon_options["simulationSpread"]
@@ -104,13 +103,10 @@ mbiasT2 = zeros(length(cases),nky)
 mT2     = zeros(length(cases),nky)
 
 lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
-# lines_color_cycle = 
-#     ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
 figd,axd=subplots(1,figsize=(8,5))
 
 # MRSTATToolbox can use options loaded from file. 
 #    Oscar set them to something that looked useful for pure simulation stuff but please double-check
-# options = load_options_from_file(pwd()*"/mrstat_options_in_silico.toml")      
 
 slopes = zeros(length(cases))
 for (caseIndex,case) in enumerate(cases)
@@ -163,10 +159,8 @@ for (caseIndex,case) in enumerate(cases)
  
         # Call the MRSTAT reconstruction function
         # Note that this should be run on a machine with GPU 
-        # ctx = MRSTATToolbox.MRSTAT.mrstat_recon_in_silico(sequence, trajectory, raw_data, coordinates, coil_sensitivities, transmit_field, options);
         assumed_transmit = (1.0 .+ 0.0 .* simB1) |> f32 |> vec
         ctx = MRSTAT.mrstat_recon(raw_data, sequence, coordinates, coilmaps, trajectory, assumed_transmit);
-        # ctx = MRSTAT.mrstat_recon(raw_data, sequence, coordinates, coilmaps, trajectory, transmit_field);
 
         final_optimpars = reshape(ctx.x[:,end], :, 4)
 
@@ -203,7 +197,6 @@ for (caseIndex,case) in enumerate(cases)
         color = lines_color_cycle[caseIndex]
         data = rT2[centerRange] .- sT2[centerRange] 
         xcoord = sVar[centerRange]  
-        # data = rT1[centerRange] .- sT1[centerRange]   
         label = description[caseIndex]
         @show label, r, data[1]   
         # If r equals 1, add a label to the plot

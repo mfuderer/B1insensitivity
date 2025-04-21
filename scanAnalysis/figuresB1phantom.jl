@@ -1,5 +1,3 @@
-# include("../startup.jl")
-# include("ScanAnalysis.jl")
 
 sx = 224; sy = 224; nSweeps = 6
 nZoom = 1
@@ -58,7 +56,7 @@ function phantomVialMeans!(figurePars)
     angulation = 0.24
     radius = 7 
     refSlice = 10
-    usableSliceRange = 8:14 # 1:1 # 10:10 # 8:14
+    usableSliceRange = 8:14 
     centerPos = [origin.+(distance*x*cos(angulation)-distance*y*sin(angulation), distance*x*sin(angulation)+distance*y*cos(angulation)) for (x,y) in symbolicPos]
     tube_centers = [CartesianIndex(round(Int64,x),round(Int64,y)) for (x,y) in centerPos]
 
@@ -114,7 +112,6 @@ function figuresPhantomB1map(figurePars)
 
     cbar_ax = fig_B1s.add_axes([0.9, 0.15, 0.05, 0.7])
     clb = fig_B1s.colorbar(pcm, cax=cbar_ax)
-    #clb = colorbar(pcm,ax=ax_B1s[3], shrink=0.8); 
     clb.ax.tick_params(labelsize=14) 
     for i in 1:3
         ax_B1s[i].set_xticks([]); 
@@ -200,7 +197,7 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false)
         end
     end
 
-    fig,ax = subplots(1,3,figsize=(12,4)) # was (17,6)
+    fig,ax = subplots(1,3,figsize=(12,4))
     markers = ["o","x","+"]
     reconNames = recDescription
 
@@ -230,13 +227,11 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false)
             label = case==1 ? recDescription[recType] : "" 
             color = lines_color_cycle[case]
             marker = markers[recType]
-            #yyy = 1000.0 .* meanMeans[recType,case,m,gels].-xxx
             yyy = biasT2[recType,case,:]
             ax[2].scatter(xxx,yyy,label=label, color=color, marker=marker)
         end
     end
     ax[2].set_xlabel("Gold standard T2 [ms]")
-    #ax[2].set_ylabel("T2 estimation error [ms]"*dctxt)
     ax[2].set_title("Absolute T2 bias [ms]", fontsize=9)
     ax[2].legend(fontsize=9)
 
@@ -259,7 +254,6 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false)
     ax[3].set_ylabel("T2 bias in %", fontsize=9)  
     ax[3].set_ylim(-22.0,45.0)
     yPositions = [24,32,39] # [9,12,9]
-    # textBG = Dict("facecolor"=>"white","alpha"=>0.5)
     for recType in eachindex(recDescription)
         ax[3].text(spacer*(recType-1)-1.4,yPositions[recType],recDescription[recType], fontsize=8)
     end
@@ -279,7 +273,6 @@ function figureAllIm(figurePars)
     # (all of T1 maps and T2 maps for scan*recon combinations)
 
     wRat = ones(nSeqs)
-    # wRat[end] = 1.25
     ddd=Dict("width_ratios" => wRat)
 
     for m in 2:2
@@ -287,7 +280,6 @@ function figureAllIm(figurePars)
         fig_maps.subplots_adjust(wspace=-0.05,hspace=0.0,right=0.8, top=0.9, bottom=0.0, left=0.0)
         for case in 1:nSeqs
             for r in 1:nRecons
-                # row = 3*(m-1)+r
                 row = r
                 # case zoom [dummy] type iter x y
                 meanIm = mapSet[r][case,recPick,m,:,:] 
@@ -314,20 +306,7 @@ function figureAllIm(figurePars)
         for r in 1:nRecons
             ax_maps[r,1].text(0.02,0.3, recDescription[r], transform=ax_maps[r,1].transAxes, rotation="vertical", color="white")
         end
-        # ax_maps[2,2].text(0.0,0.95,"T$m", fontsize=24, transform=ax_maps[2,2].transAxes, color="white")
     end
-
-    # casenames = seqDescription
-    # for case in 1:3
-    #     ax_maps[1,case].text(0.12,0.85,casenames[case], fontsize=14, transform=ax_maps[1,case].transAxes, color="white")
-    # end
-
-    # reconnames = recDescription
-    # reconTextYstart=[0.05, 0.05, 0.05]
-    # for i in 1:6
-    #     r = (i-1)%3+1
-    #     ax_maps[i,1].text(0.01,reconTextYstart[r],reconnames[r], fontsize=14, transform=ax_maps[i,1].transAxes, rotation="vertical",color="white")
-    # end
 end   
 
 
@@ -344,7 +323,6 @@ function figureDifferences(figurePars)
     # For the T2 maps, differences between the first reconstruction mode and the rest  
     if length(recDescription) > 1   # only meaningful if there is a 'rest'
         wRat = ones(nSeqs)
-        # wRat[end] = 1.25
         ddd=Dict("width_ratios" => wRat)
 
         fig_rows = min(2,length(recDescription)-1)
@@ -359,7 +337,6 @@ function figureDifferences(figurePars)
                 # case zoom [dummy] type iter x y
                 meanIm = mapSet[r][case,recPick,m,:,:] 
 
-                #vmax = 0.05*dispMax[m]; vmin = -vmax;
                 vmax = 0.012; vmin = -vmax;
 
                 pcm = ax_maps[row,case].imshow(meanIm .- meanImRef, vmin=vmin, vmax=vmax, cmap="RdBu");

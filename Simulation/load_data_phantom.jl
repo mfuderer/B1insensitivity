@@ -1,14 +1,16 @@
 # Provide Dict containing UMCU MRI data format
-function line_phantom(n)
 
-    T₁ = 0.8*ones(n) |> collect
-    T₂ = 0.06*ones(n)
-    ρ = (1.0 * ones(n) ) .|> complex 
-    ρˣ = real.(ρ)
-    ρʸ = imag.(ρ)
-    q = StructArray( map(BlochSimulators.T₁T₂ρˣρʸ , T₁, T₂, ρˣ, ρʸ) )
-    return q
-end
+
+
+# function line_phantom(n)
+#     T₁ = 0.8*ones(n) |> collect
+#     T₂ = 0.06*ones(n)
+#     ρ = (1.0 * ones(n) ) .|> complex 
+#     ρˣ = real.(ρ)
+#     ρʸ = imag.(ρ)
+#     q = StructArray( map(BlochSimulators.T₁T₂ρˣρʸ , T₁, T₂, ρˣ, ρʸ) )
+#     return q
+# end
 
 function phantom_2D(m,n)
 
@@ -23,7 +25,6 @@ end
 
 function RF_from_file(nTR, ny)
     RF=complex.(zeros(nTR))
-    #@assert(nTR==5*ny) # this function is only meaningful for a 5-measurement "actual" setup
     fn = recon_options["rfFile"]
     fPath = string(recon_options["rfFolder"],fn,".jld2")
     @show fPath
@@ -33,56 +34,11 @@ function RF_from_file(nTR, ny)
     return RF_train
 end
 
-
-
-    # sl = shepp_logan(N, SheppLoganBrainWeb()) |> rotr90
-
-    # regions = map( val -> findall(sl .== val), unique(sl))
-
-    # T₁ = zeros(N,N)
-    # T₂ = zeros(N,N)
-    # ρˣ = zeros(N,N)
-    # ρʸ = zeros(N,N)
-
-    # for r in regions
-    #     T₁[r] .= rand((0.3:0.01:2.5))
-    #     T₂[r] .= rand((0.03:0.001:0.2))
-    #     ρˣ[r] .= rand(0.5:0.02:1.5)
-    #     ρʸ[r] .= rand(0.5:0.02:1.5)
-    # end
-
-    # T₂[ T₂ .> T₁ ] .= 0.5 * T₁[ T₂ .> T₁ ]
-
-    # return map(T₁T₂ρˣρʸ, T₁, T₂, ρˣ, ρʸ) |> StructArray
-
-
-
 function load_data_phantom(recon_options)
 
     vx, vy = recon_options["numphantom_size"]
     contrast = recon_options["numphantom_sequence"]
     trajectory = recon_options["numphantom_trajectory"]
-
-    # Make phantom
-    # if recon_options["numphantom_type"] == "brainweb"
-    #     phantom = MRSTAT.MRITools.brainweb(vx,vy);
-    # # elseif recon_options["numphantom_type"] == "shepp_logan"
-    #     # phantom = MRSTAT.MRITools.shepp_logan(vx,vy);
-    # elseif recon_options["numphantom_type"] == "checkerboard"
-    #     @assert vx == vy
-    #     blocksize = 8
-    #     @assert rem(vx,blocksize) == 0
-    #     phantom = MRSTAT.MRITools.checkerboard(vx,blocksize, B₁map = true);
-    # elseif recon_options["numphantom_type"] == "tubes"
-    #     phantom = MRSTAT.MRITools.tubes(vx,vy, B₁map=false);
-
-    #     # jldsave("B1.jld2"; B1 = phantom.B₁)
-    #     # phantom.B₁ .= 0.85
-    # elseif recon_options["numphantom_type"] == "line"
-    #     phantom = MRSTAT.MRITools.line(vy);
-    # end
-
-    # phantom = line_phantom(vy)
     phantom = phantom_2D(vx,vy)
 
     # not properly implemented at the moment
@@ -102,7 +58,6 @@ function load_data_phantom(recon_options)
         y =  -fovy/2 : Δy : fovy/2 - Δy;
         @show typeof(x)
         @show x
-        #coordinates = vec(tuple.(x,y',1));
         coordinates = vec(Coordinates.(x,y',1.0));
 
     # Set coilmaps
@@ -110,10 +65,6 @@ function load_data_phantom(recon_options)
         coilmaps = SVector.(ones(ComplexF64,nv));
 
         if recon_options["coils"] > 1
-            # coil1 = complex.(repeat(LinRange(0.75,1.25,vx), 1,vy)) |> vec;
-            # coil2 = im .* complex.(repeat(reverse(LinRange(0.75,1.25,vx)), 1,vy)) |> vec;
-
-            # coilmaps = map(SVector{2}{ComplexF64}, coil1, coil2)
             nc = length(recon_options["coils"])
             coilmaps = [rand(SVector{nc}{ComplexF64}) for _ in 1:nv]
         end
@@ -147,14 +98,6 @@ function load_data_phantom(recon_options)
                 nr *= ne
             end
 
-            # @info "3x trajectory"
-            # reps = 3
-            # nr = reps*nr
-            # k0 = repeat(k0, reps)
-            # Δk = repeat(Δk, reps)
-            # py = repeat(py, reps)
-
-            # trajectory = MRSTAT.GradientTrajectories.CartesianTrajectory(nr,ns,Δt_adc,k0,Δk,py);
             trajectory = BlochSimulators.CartesianTrajectory2D(nr,ns,Δt_adc,k0,Δkˣ,py, os);
 
         elseif trajectory == "Radial"
@@ -165,17 +108,12 @@ function load_data_phantom(recon_options)
             ns = os*vx;
             nr = nk * vy
             φ = π/((√5+1)/2) # golden angle of ~111 degrees
-            # @info "testing √2 thing"
-            # Δkˣ = √2 * 2π / (os*fovx);
-            # √2 * 2π / (os*fovx);
             Δkˣ = 2π / (os*fovx);
-            # 2π / (os*fovx);
 
             # starting point in kspace for each readout
             radial_angles = collect(φ .* (0:nr-1))
             k0 = -(ns/2)*Δkˣ + 0.0im
             k0 = collect(@. exp(im*radial_angles) * k0)
-            # k_start_readout = [(x = k.re, y = k.im) for k in tmp]
 
             Δk = Δkˣ + 0.0im
             Δk = collect(@. exp(im*radial_angles) * Δk)
@@ -193,19 +131,6 @@ function load_data_phantom(recon_options)
         nTR = nr; # nr of TRs to be simulated
         γ = 26753.0;
 
-        # sl = 1 # sweeplength
-        # RF_train = sin.(LinRange(0,π,sl*vy)).^2
-        # # RF_train = LinRange(0,90, nr)
-        # RF_train = repeat(RF_train,1,nk÷sl)
-        # Random.seed!(1234);
-        # RF_train = RF_train .* (80 * rand(1,nk÷sl)) .+ 15
-
-        # # make sure first sweep starts from zero otherwise aliasing artefacts?!
-        # RF_train[1:end÷2,1] .= sin.(LinRange(0,π/2,sl*vy÷2)).^2 .* RF_train[end÷2,1]
-        # RF_train[1,1] = RF_train[2,1] / 2 # start with alpha over 2 to prevent oscillations
-        # RF_train = vec(complex.(RF_train))
-
-        # rf_function = rfDictionary[recon_options["numphantom_rf_shape"]]
         RF_train = RF_from_file(nTR,vy)
 
 
@@ -213,7 +138,6 @@ function load_data_phantom(recon_options)
         if contrast == "Balanced"
             @info "Balanced Sequence"
             @. RF_train[1:2:end] *= -1; # (0,180) phase cycling
-            # plot(abs.(RF_train))
             TR = 0.00788; # s
             TE = TR/2; # s
             nRF = 15; # nr of samples to simulate RF excitation
@@ -223,7 +147,6 @@ function load_data_phantom(recon_options)
             γΔtRF = (pi/180) * (1/nRF) * SVector(ones(nRF)...); # RF waveform normalized to flip angle of 1 degree
             nz = 16
             z = SVector( vec(collect(LinRange(-1.0,1.0,nz)))... );
-            # z = SVector(0.0)
 
             sequence = MRSTAT.BlochSimulators.bSSFP(RF_train, TR,TE,γΔtRF,Δt,γΔtGRz,z)
 
@@ -234,8 +157,7 @@ function load_data_phantom(recon_options)
 
         elseif contrast == "Spoiled"
             @info "Spoiled Sequence"
-            # @warn "Doesn't work well without phase cycling, but why?!"
-            # @. RF_train[1:2:end] *= -1; # (0,180) phase cycling
+
             TR = recon_options["TR"]; # s
             TE = TR/2.0;
             max_state = recon_options["maxstate"];
@@ -264,7 +186,6 @@ function load_data_phantom(recon_options)
                     sliceprofiles = MRSTAT.MRITools.shinnarleroux_forward(RF_train, RF_waveform, RF_duration, GR_strength, GR_refocus_area, z_locations)
                 end
             else
-                # @error "nz = 1 gives a bug"
                 sliceprofiles = ones(length(RF_train),1)
             end
 
@@ -272,13 +193,10 @@ function load_data_phantom(recon_options)
 
             if multi_echo
                 @warn "todo"
-                # TE = SVector( 0.00285, 0.00845, 0.01405, 0.01965, 0.02525, 0.03085, 0.03645, 0.04205); # s
-                # sequence = BlochSimulators.SPGR_ME(RF_train, TR, TE, sliceprofile, max_state, TI)
             end
         end
 
     # Apply mask
-        # mask = vec(abs.(phantom.ρ) .> 0.0); @warn "Proton density based mask is applied"
         mask = trues(prod(size(phantom.ρˣ))); @info "No mask is applied"
         coordinates = coordinates[mask]
         coilmaps    = coilmaps[mask]

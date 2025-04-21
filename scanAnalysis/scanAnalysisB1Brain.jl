@@ -12,10 +12,8 @@ function BrainSegment(case, r, figurePars, label=2, threshold=0.7)
     t1wemul = t1map .* rhomap ./ (t1map.^2 .+ 0.01^2) 
     t1wemul = permutedims(t1wemul,(3,2,1))
     t1wemul = reverse(t1wemul,dims=2)
-    #t1wemul = reshape(t1wemul,size(t1wemul)[1],size(t1wemul)[2],size(t1wemul)[3])
     
     # Get header structure from similar task and fill in appropriate dimensions
-    #fnsample = "/smb/user/mfuderer/BLD_RT_RESEARCH_DATA/PROJECT/MRSTAT/experiments/Jordi/Studies/Demonstrator/EPT/All_seperated/MRSTAT01/MRSTAT01_Conv_FLAIRw.nii.gz"
     fnsample = "scanAnalysis/MRSTAT01_Conv_FLAIRw.nii.gz"
     ni = niread(fnsample)
     ni_ext = ni.extensions
@@ -42,8 +40,6 @@ function BrainSegment(case, r, figurePars, label=2, threshold=0.7)
     shellCall = `$fastTool $fslbet_fn.gz`
     run(shellCall)
     
-    # labels = niread("/home/mfuderer/tmp/nistibet_tmp_seg.nii.gz")
-    # figure(); imshow(labels[:,:,10], cmap="gray", vmin=0, vmax=5)
     wmfraction = niread("tmp/nistibet_tmp_pve_$label.nii.gz")
     wmfraction = reverse(wmfraction,dims=2)
     wmfraction = permutedims(wmfraction, (3,2,1))
@@ -66,7 +62,7 @@ function SmoothOverMask(case, r, figurePars, type)
     wmroi         = figurePars["wmroi"]
 
     justRoi   = zeros(size(map))
-    mapRoi    = zeros(size(map)) # ; mapRoi .= mean(map[wmroi])
+    mapRoi    = zeros(size(map)) 
     smoothRoi = copy(mapRoi)
     for p in wmroi
         justRoi[p] = 1.0

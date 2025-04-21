@@ -16,7 +16,6 @@ for volunteer in 1:2
     percDev = zeros(2,2,4) # smoothState, condensedRecon (PreMis vs Non), sequence
 
     figurePars["filename"] = "Volunteer$volunteer"
-    # figuresReadData!(figurePars)
     figuresReadCompactData!(figurePars)
     mapSet   = figurePars["mapSet"]   
 
@@ -58,18 +57,15 @@ for volunteer in 1:2
 
         wmroi = figurePars["wmroi"]                     # FH, AP, LR
         B1map = figurePars["dreamSet"][1][2,:,:,:]      # AP, LR, FH
-        # figure(); imshow(B1map[:,:,10], cmap="gray", vmin=0.8, vmax=1.2)
         @show std(permutedims(B1map,(3,1,2))[wmroi])    # FH, AP, LR
         B1mapRoi = zeros(size(B1map))
 
         b1map = figurePars["dreamSet"][1][2,:,:,:]  # AP, LR, FH
-        # figure(); imshow(b1map[:,:,10], cmap="gray", vmin=0.8, vmax=1.2)
         wmroiTrans    = [CartesianIndex(p[2],p[3],p[1]) for p in wmroi]      # AP, LR, FH
         b1mapRoi = ones(size(b1map))
         for p in wmroiTrans
             b1mapRoi[p] = b1map[p]
         end 
-        #figure(); imshow(b1mapRoi[:,:,10], cmap="gray", vmin=0.8, vmax=1.2)
         meanROIb1 = mean(b1map[wmroiTrans])
         stdROIb1  = std(b1map[wmroiTrans])
         @printf("mean B1 is %.1f, dev is %.1f, ratio %.1f %% \n", meanROIb1, stdROIb1, 100*stdROIb1/meanROIb1)
@@ -86,9 +82,6 @@ for volunteer in 1:2
                                 recDesc, seqDesc, analyzedType, 1000*meanRoi, 1000*stdRoi, 100*stdRoi/meanRoi)
                 devRatios[r,case] = 100*stdRoi/meanRoi
                 meanRoiValues[r,case] = meanRoi
-                # if (case,r)==(3,3)
-                #     figure(); imshow(smoothRoi[10,:,:])
-                # end
             end
             preMisRatios[2,case] = 100*(meanRoiValues[2,case] - meanRoiValues[1,case]) / meanRoiValues[1,case]
         end
@@ -109,7 +102,6 @@ for volunteer in 1:2
         r=1; case=1   
         recDesc = figurePars["recDescription"][r]
         smoothRoi = SmoothOverMask(case, r, figurePars, 2)
-        # figure(); imshow(smoothRoi[10,:,:])
 
         # does the smoothing affect the estimate of B1-variation over ROI?
         B1mapTrans = permutedims(B1map,(3,1,2))
@@ -133,7 +125,6 @@ for volunteer in 1:2
         varCorSmooth = 0.975  # approximate reduction of noise-variance by smoothing-denoising
         varCorB1     = 1.0 #0.75   # guesstimate of B1-variance-reduction by B1-correction 
         devB1        = 9.9  # measured B1-deviation over ROI
-        #b1factors = [1.9, 1.85, 1.2, -0.1]
         b1factors = preMisRatios[2,:]./5.0
 
         noiseVarianceEst = (percDev[1,:,:].^2 .- percDev[2,:,:].^2)./varCorSmooth
@@ -197,10 +188,6 @@ ax.set_ylim(0,30)
 xticks([0,1,2],figurePars["recDescription"])
 for case in 1:4
     ax.plot(devRatiosMean[:,case], label=figurePars["seqDescription"][case], marker=".",markersize=20)
-    # labelTissue = (case==1) ? "Grey matter" : ""
-    # ax[2].plot(meanRoiGM[:,case], label=labelTissue)
-    # labelTissue = (case==1) ? "White matter" : ""
-    # ax[2].plot(meanRoiWM[:,case], "--", label=labelTissue)
 end
 ax.set_ylabel("relative standard dev [%]")
 ax.legend()
