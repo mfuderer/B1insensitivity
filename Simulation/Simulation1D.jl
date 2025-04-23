@@ -19,6 +19,9 @@ end
 
 include("setup.jl")
 include("load_data_phantom.jl")
+if !(MRSTAT.BlochSimulators.CUDA.functional())
+    error("This script requires a CUDA capable GPU. Please run on a machine with a CUDA capable GPU.")
+end
 
 PyPlot.rc("font", family="serif")
 PyPlot.rc("font", size=14)

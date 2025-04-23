@@ -5,6 +5,7 @@ This collection consists of the following elements:
 - Generating the RF flip-angle sequences
 - 1-D simulation of the effect of B1+ variation 
 - Generation of figures from the reconstructed data
+Run "using Pkg; Pkg.instantiate()" before using any of the scripts
 
 ## Generation of flip-angle sequences 
 This is done by running the sequenceGenerationScript in folder SequenceGeneration
@@ -20,9 +21,10 @@ This script has BlochSimulators and MRSTATToolbox as a dependency
 ## Generation of figures from the reconstructed data
 This is done by running the scripts FigureGenerationPhantom and FigureGenerationVolunteer in folder ScanAnalysis
 IMPORTANT: there are prerequisites:
-1. The data has to be downloaded separately! Motivation: it is a bit bulky (zipped size 174MB, unzipped about 1.5GB). The data is to be found in https://doi/10.5281/zenodo.14916494. It has to be unzipped into your favorite folder and this should result in three files, Phantom.jld2, Volunteer1.jld2 and Volunteer2.jld2. The name of that folder has to be edited into script FigureGenerationSetup, as `figurePars["dataFolder"] = "(the reference to that folder)"`
+1. The data has to be downloaded separately! Motivation: it is a bit bulky (zipped size 174MB, unzipped about 1.5GB). The data is to be found in https://doi.org/10.5281/zenodo.14916494. It has to be unzipped into your favorite folder and this should result in three files, Phantom.jld2, Volunteer1.jld2 and Volunteer2.jld2. The name of that folder has to be edited into script FigureGenerationSetup, as `figurePars["dataFolder"] = "(the reference to that folder)"`
 2. The HD-BET tool has to be installed from github.com/MIC-DKFZ/HD-BET; the file location of the shell script 'bet' has to be edited into FigureGenerationSetup.jl
 3. The FSL tool has to be installed from https://web.mit.edu/fsl_v5.0.10/fsl/doc/wiki/FAST.html; the file location of the shell script 'fast' has to be edited into FigureGenerationSetup.jl"
+4. This script requires a CUDA capable GPU.
 
 
 
