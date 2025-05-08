@@ -52,7 +52,8 @@ fn_base = caseName[case]
 for i in 1:nRealizations; goodseed = i
     stageText = ""
     portionRange = 0:0
-    fn = recon_options["rfFolder"]*"$fn_base($i).jld2"
+    #fn = recon_options["rfFolder"]*"$fn_base($i).jld2"
+    fn = joinpath(recon_options["rfFolder"],"$fn_base($i).jld2")
     RFdeg = BLAKJac.BLAKJac_optimize(trajectorySet, recon_options, goodseed);
     FileIO.save(fn,"RFdeg",RFdeg)
     @show fn

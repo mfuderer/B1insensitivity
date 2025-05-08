@@ -26,7 +26,8 @@ end
 function RF_from_file(nTR, ny)
     RF=complex.(zeros(nTR))
     fn = recon_options["rfFile"]
-    fPath = string(recon_options["rfFolder"],fn,".jld2")
+    #fPath = string(recon_options["rfFolder"],fn,".jld2")
+    fPath = joinpath(recon_options["rfFolder"],(fn*".jld2"))
     @show fPath
     vars = FileIO.load(fPath)
     RFdeg = vars["RFdeg"]

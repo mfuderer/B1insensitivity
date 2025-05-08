@@ -27,7 +27,8 @@ end
 function figuresReadCompactData!(figurePars)
     filename = figurePars["filename"]
     folder  = figurePars["dataFolder"]
-    fn_full = folder*filename*".jld2" 
+    #fn_full = folder*filename*".jld2" 
+    fn_full = joinpath(folder,(filename*".jld2")) 
     @load fn_full mapSet dreamSet RFdeg RFphaseDeg
     figurePars["mapSet"]          = mapSet
     figurePars["dreamSet"]        = dreamSet

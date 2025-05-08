@@ -30,7 +30,8 @@ figurePars["dataFolder"] =
 figurePars["betTool"] = "/usr/local/fsl/share/fsl/bin/bet"
 figurePars["fastTool"] = "/usr/local/fsl/share/fsl/bin/fast"
 
-@assert isfile(figurePars["dataFolder"]*"Phantom.jld2") 
+#@assert isfile(figurePars["dataFolder"]*"Phantom.jld2") 
+@assert isfile(joinpath(figurePars["dataFolder"],"Phantom.jld2"))
 "Before proceeding, unzip files from 10.5281/zenodo.14916494 and edit the file location into FigureGenerationSetup.jl"
 
 @assert isfile(figurePars["betTool"]) 

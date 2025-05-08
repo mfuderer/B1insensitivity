@@ -32,7 +32,8 @@ recon_options["recon_folder"] = "tmp";
 recon_options["recon_subfolder"] = "tmp";
 recon_options["numphantom"] = true;
 recon_options["numphantom_rf_shape"] = "from_file" 
-recon_options["rfFolder"]= pwd()*"/RFsequences/" # name of the folder to read the RF pattern from
+#recon_options["rfFolder"]= pwd()*"/RFsequences/" # name of the folder to read the RF pattern from
+recon_options["rfFolder"]= joinpath(pwd(),"RFsequences") # name of the folder to read the RF pattern from
 
 recon_options["maxRho"]   = 1.0
 recon_options["simulationT1center"]  = 0.7 # 1.3
