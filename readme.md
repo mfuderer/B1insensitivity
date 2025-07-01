@@ -5,7 +5,45 @@ This collection consists of the following elements:
 - Generating the RF flip-angle sequences
 - 1-D simulation of the effect of B1+ variation 
 - Generation of figures from the reconstructed data
-Run "using Pkg; Pkg.instantiate()" before using any of the scripts
+
+## Installing and using Julia
+This repository contains Julia scripts for generating and analyzing data. These scripts rely on external Julia packages to perform various tasks. If you're new to Julia, don't worry—this guide will help you set everything up.
+
+### Requirements: To run the scripts, you need:
+1. Julia installed on your computer (download it from https://julialang.org).
+2. An internet connection to download the required packages.
+
+### Setting Up the Environment
+Julia uses "environments" to manage packages. This repository includes a Project.toml and Manifest.toml file, which specify all the packages and their versions needed to run the scripts. Follow these steps to set up the environment:
+
+1. Open Julia: Start Julia from your terminal or Julia IDE (e.g., VS Code or Jupyter Notebook).
+2. Activate the Environment
+Navigate to the folder containing this repository. In Julia, type:    cd("path/to/this/repository")
+
+Then activate the environment:
+
+using Pkg
+Pkg.activate(".")
+
+This tells Julia to use the environment defined in this folder.
+
+3. Install the Packages
+Once the environment is activated, install the required packages by running:
+
+Pkg.instantiate()
+
+This will download and install all the packages specified in the Project.toml and Manifest.toml files.
+
+### Running the Scripts
+After setting up the environment, you can run the scripts. For example:
+
+include("sequenceGenerationScript.jl")
+
+Make sure to follow any specific instructions in the script comments.
+
+### Notes
+If you encounter any issues, ensure that the environment is activated (Pkg.activate(".") and Pkg.instantiate()) before running the scripts.
+The scripts may take some time to run, depending on the task and your computer's performance.
 
 ## Generation of flip-angle sequences 
 This is done by running the sequenceGenerationScript in folder SequenceGeneration
