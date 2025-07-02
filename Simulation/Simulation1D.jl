@@ -107,6 +107,7 @@ figd,axd2=subplots(1,figsize=(8,5))
 axd  = [axd1,axd2]
 
 slopes = zeros(2,length(cases))
+plotmin = 200.0; plotmax=-200.0      # for equal value range of two plots
 for (caseIndex,case) in enumerate(cases)
     for r in 1:nR[caseIndex]
         recon_options["rfFile"]  = nR[caseIndex]==1 ? case : case*"($r)"
@@ -191,7 +192,7 @@ for (caseIndex,case) in enumerate(cases)
         for m in 1:2 
             centerRange=nky÷2-50 : nky÷2+50
             color = lines_color_cycle[caseIndex]
-            data = 1000.0 .* (rT[m][centerRange] .- sT[m][centerRange])
+            data = 100.0 .* (rT[m][centerRange] .- sT[m][centerRange])./ sT[m][centerRange] # in percent
             xcoord = sVar[centerRange]  
             label = description[caseIndex]
             @show label, r, data[1]   
@@ -203,13 +204,16 @@ for (caseIndex,case) in enumerate(cases)
             end
             if (nR[caseIndex]>1); axd[m].text(sVar[centerRange][1], data[1], string(r), color=color); end;
             slopes[m,caseIndex] = (data[51+10]-data[51-10])/(xcoord[51+10]-xcoord[51-10])
+            plotmin= min(plotmin, minimum(data))
+            plotmax= max(plotmax, maximum(data))
         end 
     end
 end
 
 for m in 1:2 
     axd[m].set_xlabel("value of $(recon_options["simulationVariable"])")
-    axd[m].set_ylabel("bias on T$m [ms]")
+    axd[m].set_ylabel("bias on T$m [%]")
     axd[m].legend()
+    axd[m].set_ylim(plotmin,plotmax)  # Set y-axis range here
     @show slopes[m,:]
 end
