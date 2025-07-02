@@ -102,9 +102,7 @@ startstate          = -1
 
 lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
 
-figd,axd1=subplots(1,figsize=(8,5))
-figd,axd2=subplots(1,figsize=(8,5))
-axd  = [axd1,axd2]
+fig,axd=subplots(1,2,figsize=(12,5))
 
 slopes = zeros(2,length(cases))
 plotmin = 200.0; plotmax=-200.0      # for equal value range of two plots
@@ -210,10 +208,10 @@ for (caseIndex,case) in enumerate(cases)
     end
 end
 
+axd[1].legend()
 for m in 1:2 
     axd[m].set_xlabel("value of $(recon_options["simulationVariable"])")
     axd[m].set_ylabel("bias on T$m [%]")
-    axd[m].legend()
     axd[m].set_ylim(plotmin,plotmax)  # Set y-axis range here
     @show slopes[m,:]
 end
