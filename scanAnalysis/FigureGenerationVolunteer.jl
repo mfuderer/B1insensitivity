@@ -19,9 +19,11 @@ for volunteer in 1:2
     figuresReadCompactData!(figurePars)
     mapSet   = figurePars["mapSet"]   
 
-    figureAllIm(figurePars)
-    figureDifferences(figurePars)
-
+    if volunteer==1
+        figureAllIm(figurePars)
+        figureDifferences(figurePars)
+    end
+    
     tissueName                = ["GM", "WM"]
     threshold_settings        = [0.5, 0.7] # apparently it needs to be much lower for GM than for WM 
 
@@ -89,87 +91,87 @@ for volunteer in 1:2
         percDev[2,2,:] =        devRatios[3,:]                          # assumed to refer to the 'Non' deviations
 
         # plotting of a smoothed deviation graph
-        figure()
-        ylim(0,30)
-        xticks([0,1,2],figurePars["recDescription"])
-        for case in 1:4
-            plot(devRatios[:,case], label=figurePars["seqDescription"][case])
-        end
-        ylabel("relative standard dev [%]")
-        legend()
-        title("Tissue $(tissueName[tissueLabel]), volunteer $volunteer, smoothed")
+        # figure()
+        # ylim(0,30)
+        # xticks([0,1,2],figurePars["recDescription"])
+        # for case in 1:4
+        #     plot(devRatios[:,case], label=figurePars["seqDescription"][case])
+        # end
+        # ylabel("relative standard dev [%]")
+        # legend()
+        # title("Tissue $(tissueName[tissueLabel]), volunteer $volunteer, smoothed")
 
-        r=1; case=1   
-        recDesc = figurePars["recDescription"][r]
-        smoothRoi = SmoothOverMask(case, r, figurePars, 2)
+        # r=1; case=1   
+        # recDesc = figurePars["recDescription"][r]
+        # smoothRoi = SmoothOverMask(case, r, figurePars, 2)
 
-        # does the smoothing affect the estimate of B1-variation over ROI?
-        B1mapTrans = permutedims(B1map,(3,1,2))
-        @show std(B1mapTrans[wmroi])    
-        justRoi   = zeros(size(B1mapTrans))
-        mapRoi    = zeros(size(B1mapTrans)) # ; mapRoi .= mean(map[wmroi])
-        smoothRoi = copy(mapRoi)
-        for p in wmroi
-            justRoi[p] = 1.0
-            mapRoi[p]  = B1mapTrans[p]  
-        end 
+        # # does the smoothing affect the estimate of B1-variation over ROI?
+        # B1mapTrans = permutedims(B1map,(3,1,2))
+        # @show std(B1mapTrans[wmroi])    
+        # justRoi   = zeros(size(B1mapTrans))
+        # mapRoi    = zeros(size(B1mapTrans)) # ; mapRoi .= mean(map[wmroi])
+        # smoothRoi = copy(mapRoi)
+        # for p in wmroi
+        #     justRoi[p] = 1.0
+        #     mapRoi[p]  = B1mapTrans[p]  
+        # end 
 
-        kernel = Kernel.gaussian((1,1,1))
-        convolvedMapRoi  = imfilter(mapRoi, kernel)
-        convolvedJustRoi = imfilter(justRoi, kernel)
-        for p in wmroi
-            smoothRoi[p] = convolvedMapRoi[p] / convolvedJustRoi[p]
-        end 
-        @show std(smoothRoi[wmroi])    
+        # kernel = Kernel.gaussian((1,1,1))
+        # convolvedMapRoi  = imfilter(mapRoi, kernel)
+        # convolvedJustRoi = imfilter(justRoi, kernel)
+        # for p in wmroi
+        #     smoothRoi[p] = convolvedMapRoi[p] / convolvedJustRoi[p]
+        # end 
+        # @show std(smoothRoi[wmroi])    
 
-        varCorSmooth = 0.975  # approximate reduction of noise-variance by smoothing-denoising
-        varCorB1     = 1.0 #0.75   # guesstimate of B1-variance-reduction by B1-correction 
-        devB1        = 9.9  # measured B1-deviation over ROI
-        b1factors = preMisRatios[2,:]./5.0
+        # varCorSmooth = 0.975  # approximate reduction of noise-variance by smoothing-denoising
+        # varCorB1     = 1.0 #0.75   # guesstimate of B1-variance-reduction by B1-correction 
+        # devB1        = 9.9  # measured B1-deviation over ROI
+        # b1factors = preMisRatios[2,:]./5.0
 
-        noiseVarianceEst = (percDev[1,:,:].^2 .- percDev[2,:,:].^2)./varCorSmooth
-        b1NonVarViaFactor = (devB1.*b1factors[:]).^2
-        b1NonVarViaVarB1  = (percDev[:,2,:].^2 .- percDev[:,1,:].^2)./varCorB1
-        totVarNon        = percDev[:,2,:].^2
+        # noiseVarianceEst = (percDev[1,:,:].^2 .- percDev[2,:,:].^2)./varCorSmooth
+        # b1NonVarViaFactor = (devB1.*b1factors[:]).^2
+        # b1NonVarViaVarB1  = (percDev[:,2,:].^2 .- percDev[:,1,:].^2)./varCorB1
+        # totVarNon        = percDev[:,2,:].^2
 
-        println()
-        @printf("Percent difference in value between Mis and Pre, for unsmoothed and smoothed: \n")
-        for i in 1:2
-            for value in preMisRatios[i,:]
-                @printf("%6.2f ", value)
-            end
-            println()
-        end
+        # println()
+        # @printf("Percent difference in value between Mis and Pre, for unsmoothed and smoothed: \n")
+        # for i in 1:2
+        #     for value in preMisRatios[i,:]
+        #         @printf("%6.2f ", value)
+        #     end
+        #     println()
+        # end
 
-        analysisTypes = [noiseVarianceEst, b1NonVarViaFactor, b1NonVarViaVarB1, totVarNon]
-        analysisNames = ["noiseVarianceEst", "b1NonVarViaFactor", "b1NonVarViaVarB1", "totVarNon"]
-        println()
-        for (i,thisArray) in enumerate([noiseVarianceEst, b1NonVarViaFactor, b1NonVarViaVarB1, totVarNon])
-            @printf("%s: \n",analysisNames[i])
-            for row in axes(thisArray,1)
-                for value in thisArray[row,:]
-                    @printf("%6.2f ", value)
-                end
-                println()
-            end
-            println()
-        end
+        # analysisTypes = [noiseVarianceEst, b1NonVarViaFactor, b1NonVarViaVarB1, totVarNon]
+        # analysisNames = ["noiseVarianceEst", "b1NonVarViaFactor", "b1NonVarViaVarB1", "totVarNon"]
+        # println()
+        # for (i,thisArray) in enumerate([noiseVarianceEst, b1NonVarViaFactor, b1NonVarViaVarB1, totVarNon])
+        #     @printf("%s: \n",analysisNames[i])
+        #     for row in axes(thisArray,1)
+        #         for value in thisArray[row,:]
+        #             @printf("%6.2f ", value)
+        #         end
+        #         println()
+        #     end
+        #     println()
+        # end
 
-        @printf("Condensed expected noise variance, expected B1 variance, measured total variance: \n")
-        noiseVarianceCondensed = mean(noiseVarianceEst, dims=1) 
-        b1VarianceCondensed    = [(0.1*b1NonVarViaFactor[seq]+b1NonVarViaVarB1[1,seq]+b1NonVarViaVarB1[2,seq])/2.1 for seq in axes(percDev,3)]
-        for thisArray in [noiseVarianceCondensed, b1VarianceCondensed, totVarNon[1,:]]
-            for value in thisArray
-                @printf("%6.2f ", value)
-            end
-            println()
-        end
-        remainingVariance = totVarNon[1,:] .- noiseVarianceCondensed[1,:] .- b1VarianceCondensed
-        @printf("Yet unexplained variance: \n")
-        for value in remainingVariance
-            @printf("%6.2f ", value)
-        end
-        println()
+        # @printf("Condensed expected noise variance, expected B1 variance, measured total variance: \n")
+        # noiseVarianceCondensed = mean(noiseVarianceEst, dims=1) 
+        # b1VarianceCondensed    = [(0.1*b1NonVarViaFactor[seq]+b1NonVarViaVarB1[1,seq]+b1NonVarViaVarB1[2,seq])/2.1 for seq in axes(percDev,3)]
+        # for thisArray in [noiseVarianceCondensed, b1VarianceCondensed, totVarNon[1,:]]
+        #     for value in thisArray
+        #         @printf("%6.2f ", value)
+        #     end
+        #     println()
+        # end
+        # remainingVariance = totVarNon[1,:] .- noiseVarianceCondensed[1,:] .- b1VarianceCondensed
+        # @printf("Yet unexplained variance: \n")
+        # for value in remainingVariance
+        #     @printf("%6.2f ", value)
+        # end
+        # println()
 
         push!(meanRoiValuesCollection, meanRoiValues)
         push!(devRatiosCollection, devRatios)
