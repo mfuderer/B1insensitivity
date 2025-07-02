@@ -281,7 +281,7 @@ function figureAllIm(figurePars)
     wRat = ones(nSeqs)
     ddd=Dict("width_ratios" => wRat)
 
-    for m in 2:2
+    for m in 1:2
         fig_maps,ax_maps = subplots(nRecons,nSeqs,figsize=(13.5,9.5),gridspec_kw=ddd)
         fig_maps.subplots_adjust(wspace=-0.05,hspace=0.0,right=0.8, top=0.9, bottom=0.0, left=0.0)
         for case in 1:nSeqs
@@ -326,44 +326,45 @@ function figureDifferences(figurePars)
     midSlice      = Int64(round((sliceRange[1]+sliceRange[end])/2))
     recPick       = length(sliceRange) > 1 ? midSlice : 1
 
-    # For the T2 maps, differences between the first reconstruction mode and the rest  
-    if length(recDescription) > 1   # only meaningful if there is a 'rest'
-        wRat = ones(nSeqs)
-        ddd=Dict("width_ratios" => wRat)
+    for m in 1:2
+        # For the maps, differences between the first reconstruction mode and the rest  
+        if length(recDescription) > 1   # only meaningful if there is a 'rest'
+            wRat = ones(nSeqs)
+            ddd=Dict("width_ratios" => wRat)
 
-        fig_rows = min(2,length(recDescription)-1)
-        fig_maps,ax_maps = subplots(2,nSeqs,figsize=(17,8),gridspec_kw=ddd)  
-        fig_maps.subplots_adjust(wspace=-0.05,hspace=-0.1,right=0.9, top=0.9, bottom=0.0, left=0.0)
+            fig_rows = min(2,length(recDescription)-1)
+            fig_maps,ax_maps = subplots(2,nSeqs,figsize=(17,8),gridspec_kw=ddd)  
+            fig_maps.subplots_adjust(wspace=-0.05,hspace=-0.1,right=0.9, top=0.9, bottom=0.0, left=0.0)
 
-        for case in 1:nSeqs
-            m = 2
-            meanImRef = mapSet[1][case,recPick,m,:,:] 
-            for r in 2:length(recDescription)
-                row = r-1
-                # case zoom [dummy] type iter x y
-                meanIm = mapSet[r][case,recPick,m,:,:] 
+            for case in 1:nSeqs
+                meanImRef = mapSet[1][case,recPick,m,:,:] 
+                for r in 2:length(recDescription)
+                    row = r-1
+                    # case zoom [dummy] type iter x y
+                    meanIm = mapSet[r][case,recPick,m,:,:] 
 
-                vmax = 0.012; vmin = -vmax;
+                    vmax = [0.12,0.012][m]; vmin = -vmax;
 
-                pcm = ax_maps[row,case].imshow(meanIm .- meanImRef, vmin=vmin, vmax=vmax, cmap="RdBu");
+                    pcm = ax_maps[row,case].imshow(meanIm .- meanImRef, vmin=vmin, vmax=vmax, cmap="RdBu");
 
-                if (case==1 && r==2)
-                    fig_maps.subplots_adjust(right=0.8)
-                    cbar_ax = fig_maps.add_axes([0.85, 0.15, 0.05, 0.7])
-                    clb = fig_maps.colorbar(pcm, cax=cbar_ax, ticks = [vmin, 0, vmax])
-                    clb.ax.tick_params(labelsize=20) 
-                    clb.ax.set_yticklabels(["$(1000*vmin) ms", "0 ms", "$(1000*vmax) ms"], fontsize=14)
+                    if (case==1 && r==2)
+                        fig_maps.subplots_adjust(right=0.8)
+                        cbar_ax = fig_maps.add_axes([0.85, 0.15, 0.05, 0.7])
+                        clb = fig_maps.colorbar(pcm, cax=cbar_ax, ticks = [vmin, 0, vmax])
+                        clb.ax.tick_params(labelsize=20) 
+                        clb.ax.set_yticklabels(["$(1000*vmin) ms", "0 ms", "$(1000*vmax) ms"], fontsize=14)
+                    end
+
+                    ax_maps[row,case].set_xticks([]); 
+                    ax_maps[row,case].set_yticks([]);
+                    ax_maps[row,case].set_yticklabels([]);  
                 end
-
-                ax_maps[row,case].set_xticks([]); 
-                ax_maps[row,case].set_yticks([]);
-                ax_maps[row,case].set_yticklabels([]);  
+                ax_maps[1,case].set_title(seqDescription[case], fontsize=16)    
             end
-            ax_maps[1,case].set_title(seqDescription[case], fontsize=16)    
-        end
-        for r in 2:length(recDescription)
-            vtext = recDescription[r]*" - "*recDescription[1] 
-            ax_maps[r-1,1].text(0.02,0.15, vtext, transform = ax_maps[r-1,1].transAxes, rotation="vertical", color="black")
+            for r in 2:length(recDescription)
+                vtext = recDescription[r]*" - "*recDescription[1] 
+                ax_maps[r-1,1].text(0.02,0.15, vtext, transform = ax_maps[r-1,1].transAxes, rotation="vertical", color="black")
+            end
         end
     end
 end
