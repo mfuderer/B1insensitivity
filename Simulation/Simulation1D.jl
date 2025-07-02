@@ -73,14 +73,8 @@ simT1 = recon_options["simulationT1center"] .* ones(nkx,nky)
 simT2 = recon_options["simulationT2center"] .* ones(nkx,nky)
 simB1 = recon_options["simulationB1center"] .* ones(nkx,nky)
 for x in 1:nkx
-    if recon_options["simulationVariable"]=="T1"
-        simT1[x,:] = sawtooth(nky, recon_options["simulationT1center"], spread)
-    elseif recon_options["simulationVariable"]=="T2"
-        simT2[x,:] = sawtooth(nky, recon_options["simulationT2center"], spread)
-    elseif recon_options["simulationVariable"]=="B1"
+    if recon_options["simulationVariable"]=="B1"
         simB1[x,:]  = sawtooth(nky, recon_options["simulationB1center"], spread, false)
-    elseif recon_options["simulationVariable"]=="measured from phantom";
-        ; # no overwrites
     else @assert false
     end
 end
@@ -102,17 +96,17 @@ nR                  = [1,                1,               1,                  1]
 
 sweeps              = 6
 startstate          = -1
-mbiasT1 = zeros(length(cases),nky)
-mbiasT2 = zeros(length(cases),nky)
-mT2     = zeros(length(cases),nky)
+# mbiasT1 = zeros(length(cases),nky)
+# mbiasT2 = zeros(length(cases),nky)
+# mT2     = zeros(length(cases),nky)
 
 lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
-figd,axd=subplots(1,figsize=(8,5))
 
-# MRSTATToolbox can use options loaded from file. 
-#    Oscar set them to something that looked useful for pure simulation stuff but please double-check
+figd,axd1=subplots(1,figsize=(8,5))
+figd,axd2=subplots(1,figsize=(8,5))
+axd  = [axd1,axd2]
 
-slopes = zeros(length(cases))
+slopes = zeros(2,length(cases))
 for (caseIndex,case) in enumerate(cases)
     for r in 1:nR[caseIndex]
         recon_options["rfFile"]  = nR[caseIndex]==1 ? case : case*"($r)"
@@ -143,7 +137,7 @@ for (caseIndex,case) in enumerate(cases)
         # For 2D experiments it's a different story.
 
         raw_data = simulate_signal(CUDALibs(), sequence, parameters_with_B1, trajectory, coordinates, coilmaps)
-       
+    
         # All arguments should be of the same floating point precision, let's just do Float32 using BlochSimulators.f32's function        
         # The arrays also need to have a specific number of dimensions, add missing dimensions with size 1
         # For raw data: get data back to CPU, add "locations" and "repetitions" dimensions and convert to Float32
@@ -155,12 +149,12 @@ for (caseIndex,case) in enumerate(cases)
         # For coil sensitivity maps: Add "x", "z" and "locations" dimensions
         @assert size(coilmaps, 2) == 1
         # coil_sensitivities = reshape(coilmaps, 1, length(coilmaps), 1, 1, 1)
- 
+
         # # For transmit field: Add "x", "z" and "locations" dimensions
         # transmit_field = reshape(complex.(parameters_with_B1.B₁), 1, length(coordinates), 1, 1)
- 
+
         recon_options["simulation_parameters"] = T₁T₂ρˣρʸ
- 
+
         # Call the MRSTAT reconstruction function
         # Note that this should be run on a machine with GPU 
         assumed_transmit = (1.0 .+ 0.0 .* simB1) |> f32 |> vec
@@ -179,57 +173,43 @@ for (caseIndex,case) in enumerate(cases)
 
         rT1 = reshape(recon_res.T₁, 1, nky)
         rT2 = reshape(recon_res.T₂, 1, nky)
+        rT  = [rT1,rT2]
         sT1 = reshape(simT1, 1, nky)
         sT2 = reshape(simT2, 1, nky)
+        sT  = [sT1,sT2]
         sB1 = reshape(simB1, 1, nky)
 
-        mbiasT1[caseIndex,:] = mean(sT1.-rT1, dims=1) |> vec
-        mbiasT2[caseIndex,:] = mean(sT2.-rT2, dims=1) |> vec
-        mT2[caseIndex,:]     = mean(  sT2,    dims=1) |> vec
+        # mbiasT1[caseIndex,:] = mean(sT1.-rT1, dims=1) |> vec
+        # mbiasT2[caseIndex,:] = mean(sT2.-rT2, dims=1) |> vec
+        # mT2[caseIndex,:]     = mean(  sT2,    dims=1) |> vec
 
         sVar = copy(sT1)
-        if recon_options["simulationVariable"]=="T1"; sVar = sT1;
-        elseif recon_options["simulationVariable"]=="T2"; sVar = sT2;
-        elseif recon_options["simulationVariable"]=="B1"; sVar = sB1;
-        elseif recon_options["simulationVariable"]=="measured from phantom"
-            from_measured =  measuredS[caseIndex]*sB1[1]/recon_options["TR"]*(sT2[1]*(sT2[1]+0.12))
-            sVar .= from_measured;
+        if recon_options["simulationVariable"]=="B1"; sVar = sB1;
         else @assert false
         end
 
-        centerRange=nky÷2-50 : nky÷2+50
-        color = lines_color_cycle[caseIndex]
-        data = rT2[centerRange] .- sT2[centerRange] 
-        xcoord = sVar[centerRange]  
-        label = description[caseIndex]
-        @show label, r, data[1]   
-        # If r equals 1, add a label to the plot
-        if r == 1
-            axd.plot(sVar[centerRange], data, color=color, label=label)
-        else
-            axd.plot(sVar[centerRange], data, color=color)
-        end
-        if (nR[caseIndex]>1); axd.text(sVar[centerRange][1], data[1], string(r), color=color); end;
-        slopes[caseIndex] = (data[51+10]-data[51-10])/(xcoord[51+10]-xcoord[51-10])
+        for m in 1:2 
+            centerRange=nky÷2-50 : nky÷2+50
+            color = lines_color_cycle[caseIndex]
+            data = 1000.0 .* (rT[m][centerRange] .- sT[m][centerRange])
+            xcoord = sVar[centerRange]  
+            label = description[caseIndex]
+            @show label, r, data[1]   
+            # If r equals 1, add a label to the plot
+            if r == 1
+                axd[m].plot(sVar[centerRange], data, color=color, label=label)
+            else
+                axd[m].plot(sVar[centerRange], data, color=color)
+            end
+            if (nR[caseIndex]>1); axd[m].text(sVar[centerRange][1], data[1], string(r), color=color); end;
+            slopes[m,caseIndex] = (data[51+10]-data[51-10])/(xcoord[51+10]-xcoord[51-10])
+        end 
     end
 end
-axd.set_xlabel("value of $(recon_options["simulationVariable"])")
-axd.set_ylabel("bias on T2 [s]")
-axd.legend()
-txtt1 = "T1=$(recon_options["simulationT1center"])s, "
-txtt2 = "T2=$(recon_options["simulationT2center"])s, "
-txtB1 = "B1=$(recon_options["simulationB1center"])"
-if recon_options["simulationVariable"]=="T1"; txtt1="T1=variable, ";
-elseif recon_options["simulationVariable"]=="T2"; txtt2="T2=variable, ";
-elseif recon_options["simulationVariable"]=="B1"; txtB1="B1=variable";
-elseif recon_options["simulationVariable"]=="measured from phantom"
-    ; # no overwrite of texts
-else @assert false
-end
-# axd.text(0.2,0.9,txtt1*txtt2*txtB1, transform=axd.transAxes) # In publication, this is for the legend
 
-if recon_options["simulationVariable"]=="measured from phantom"
-    axd.plot([0.0,0.02],[0.0,0.02],color="black")
+for m in 1:2 
+    axd[m].set_xlabel("value of $(recon_options["simulationVariable"])")
+    axd[m].set_ylabel("bias on T$m [ms]")
+    axd[m].legend()
+    @show slopes[m,:]
 end
-@show slopes
-
