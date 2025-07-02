@@ -160,7 +160,7 @@ function figureSequence2by2(figurePars)
     end
 end
 
-function figuresPhantomBias(figurePars, diffusion_corrected=false)
+function figuresPhantomBias(figurePars, diffusion_corrected=false, type=2) #T2 by default
     mapSet = figurePars["mapSet"]  
     meanMeans   = figurePars["meanMeans"]       
     goldstandard_3T=figurePars["goldstandard_3T"]
@@ -182,19 +182,18 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false)
     lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
 
     # Prepare Bias list and relative bias 
-    type = 2 # T2
-    gtT2 = goldstandard_3T[type]
-    xxx = ([gtT2[tubeLabel[gel]] for gel in gels])
-    biasT2    = zeros(length(recDescription),nSeqs,length(gels))
-    biasT2rel = zeros(length(recDescription),nSeqs,length(gels))
+    gtT = goldstandard_3T[type]
+    xxx = ([gtT[tubeLabel[gel]] for gel in gels])
+    biasTn    = zeros(length(recDescription),nSeqs,length(gels))
+    biasTrel  = zeros(length(recDescription),nSeqs,length(gels))
     for recType in eachindex(recDescription)
         for case in 1:nSeqs
-            biasT2[recType,case,:] = 1000.0 .* meanMeans[recType,case,type,gels].-xxx
+            biasTn[recType,case,:] = 1000.0 .* meanMeans[recType,case,type,gels].-xxx
             if diffusion_corrected
                 diffCorr = [mapCollection[case][type,tubeLabel[gel]] for gel in gels]
-                biasT2[recType,case,:] = biasT2[recType,case,:] .+ 1000.0 .* diffCorr
+                biasTn[recType,case,:] = biasTn[recType,case,:] .+ 1000.0 .* diffCorr
             end 
-            biasT2rel[recType,case,:] = biasT2[recType,case,:]./xxx
+            biasTrel[recType,case,:] = biasTn[recType,case,:]./xxx
         end
     end
 
@@ -202,24 +201,28 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false)
     markers = ["o","x","+"]
     reconNames = recDescription
 
-    m = 2
+    m = type
     localSeqDescription = seqDescription
     localSeqDescription = ["A-only noise-opt", "A-only B1-opt", "A+P noise-opt", "A+P B1-opt"]
     for case in 1:nSeqs
         label = localSeqDescription[case] 
         color = lines_color_cycle[case]
         yyy = 1000.0 .* (meanMeans[comparisonSet[2],case,m,gels].-meanMeans[comparisonSet[1],case,m,gels])
-        ax[1].scatter(xxx,yyy,label=label, color=color)
-        slope = mean(yyy) / mean(xxx)
-        @show label, slope 
-        xl = minimum(xxx); xh = maximum(xxx)
-        ax[1].plot([xl,xh],slope.*[xl,xh], color=color)        
+        # make it relative: 
+        yyyrel = 100.0 .* yyy./xxx
+        @show label, mean(yyyrel)
+
+        ax[1].scatter(xxx,yyyrel,label=label, color=color)
+        # slope = mean(yyy) / mean(xxx)
+        # @show label, slope
+        # xl = minimum(xxx); xh = maximum(xxx)
+        # ax[1].plot([xl,xh],slope.*[xl,xh], color=color)        
     end
-    ax[1].set_ylim(-5.0,23.0)
-    ax[1].set_xlabel("Gold standard T2 [ms]")
-    ytext = "T2 estimation difference [ms] due to 5% offset in B1"*dctxt
-    #ax[1].set_ylabel(ytext)
-    ax[1].set_title("Miscalibration effect on T2 [ms]", fontsize=9)
+    #ax[1].set_ylim(-5.0,23.0)
+    ax[1].set_xlabel("Gold standard T$type [ms]")
+    ytext = "T$type estimation difference [%] \n due to 5% offset in B1"*dctxt
+    ax[1].set_ylabel(ytext)
+    ax[1].set_title("Miscalibration effect on T$type [%]", fontsize=9)
     ax[1].legend(fontsize=9)
 
     for recType in eachindex(recDescription)
@@ -228,12 +231,12 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false)
             label = case==1 ? recDescription[recType] : "" 
             color = lines_color_cycle[case]
             marker = markers[recType]
-            yyy = biasT2[recType,case,:]
+            yyy = 100.0 .* biasTn[recType,case,:] ./ xxx
             ax[2].scatter(xxx,yyy,label=label, color=color, marker=marker)
         end
     end
-    ax[2].set_xlabel("Gold standard T2 [ms]")
-    ax[2].set_title("Absolute T2 bias [ms]", fontsize=9)
+    ax[2].set_xlabel("Gold standard T$type [ms]")
+    ax[2].set_title("T$type bias [%]", fontsize=9)
     ax[2].legend(fontsize=9)
 
     # Alessandro's suggested deviation-bar graphs
@@ -241,8 +244,8 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false)
     for recType in eachindex(recDescription)
         for case in 1:nSeqs
             pos = spacer*(recType-1) + (case-1)
-            ave = 100.0 * mean(biasT2rel[recType,case,:])
-            dev = 100.0 * std(biasT2rel[recType,case,:])
+            ave = 100.0 * mean(biasTrel[recType,case,:])
+            dev = 100.0 * std(biasTrel[recType,case,:])
             color = lines_color_cycle[case]
             ax[3].bar(pos,ave,color=color)
             ax[3].errorbar(pos,ave,dev,linewidth=2.0,capsize=8.0,color="black")
@@ -252,8 +255,10 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false)
     ax[3].plot([-0.8,(3-1)*spacer+4.0],[0.0,0.0],color="black")
     ax[3].yaxis.set_label_position("right")
     ax[3].yaxis.tick_right()
-    ax[3].set_ylabel("T2 bias in %", fontsize=9)  
-    ax[3].set_ylim(-22.0,45.0)
+    ax[3].set_ylabel("T$type bias in %", fontsize=9)  
+    for i in 1:3 
+        ax[i].set_ylim(-22.0,53.0)
+    end
     yPositions = [24,32,39] # [9,12,9]
     for recType in eachindex(recDescription)
         ax[3].text(spacer*(recType-1)-1.4,yPositions[recType],recDescription[recType], fontsize=8)

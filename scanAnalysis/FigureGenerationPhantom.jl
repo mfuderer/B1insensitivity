@@ -11,7 +11,8 @@ phantomVialMeans!(figurePars)
 figureSequence2by2(figurePars)
 figuresPhantomB1map(figurePars)
 PyPlot.rc("font", size=9)
-figuresPhantomBias(figurePars, true); # with diffusion correction
+figuresPhantomBias(figurePars, false, 1); # T1 without diffusion correction
+figuresPhantomBias(figurePars, true, 2);  # T2  with diffusion correction
 PyPlot.rc("font", size=14)
 figureAllIm(figurePars)
 figureDifferences(figurePars)
