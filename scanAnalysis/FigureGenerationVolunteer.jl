@@ -8,12 +8,13 @@ using NIfTI
 meanRoiValuesCollection = []
 devRatiosCollection=[]
 analyzedType = 2      # T2 map
+bothT1andT2 = 1:2
 for volunteer in 1:2
 
     figurePars["dispMax"]       = [2.0,0.18,1.0]
     PyPlot.rc("font", family="serif")
     PyPlot.rc("font", size=14)
-    percDev = zeros(2,2,4) # smoothState, condensedRecon (PreMis vs Non), sequence
+    # percDev = zeros(2,2,4,2) # smoothState, condensedRecon (PreMis vs Non), sequence, T1orT2
 
     figurePars["filename"] = "Volunteer$volunteer"
     figuresReadCompactData!(figurePars)
@@ -30,32 +31,39 @@ for volunteer in 1:2
     for tissueLabel in 1:2
         threshold                  = threshold_settings[tissueLabel]
 
-        devRatios = zeros(length(figurePars["recDescription"]),length(figurePars["seqDescription"]))
-        meanRoiValues= zeros(length(figurePars["recDescription"]),length(figurePars["seqDescription"]))
-        preMisRatios = zeros(2,                                   length(figurePars["seqDescription"])) # over two smooth states
+        devRatios = zeros(length(figurePars["recDescription"]),length(figurePars["seqDescription"]), length(bothT1andT2))
+        meanRoiValues= zeros(length(figurePars["recDescription"]),length(figurePars["seqDescription"]), length(bothT1andT2))
+        # preMisRatios = zeros(2,                                   length(figurePars["seqDescription"])) # over two smooth states
 
         # checking results with common ROI     
-        meanRoi, stdRoi = BrainSegment(1, 1, figurePars, tissueLabel,threshold) # taking the pre-calibrated no-phase roi for all   
+        BrainSegment(1, 1, figurePars, tissueLabel,threshold) # taking the pre-calibrated no-phase roi for all   
         wmroi         = figurePars["wmroi"]           # FH, AP, LR  
-        sliceRange    = figurePars["sliceRange"]   
+        sliceRange    = figurePars["sliceRange"] 
+        meanRoi       = zeros(2)  
+        stdRoi        = zeros(2)
 
         @printf("Tissue %1d \n", tissueLabel)
-        for case in 1:nSeqs
-            seqDesc = figurePars["seqDescription"][case] 
-            for r in eachindex(figurePars["recDescription"])
-                recDesc = figurePars["recDescription"][r]
-                t2map   = mapSet[r][case,sliceRange,analyzedType,:,:] # FH, AP, LR
-                meanRoi = mean(t2map[wmroi])
-                stdRoi  = std(t2map[wmroi]);
-                @printf("For %s recon of %s sequence, mean T%1d is %.1f ms, dev is %.1f ms, ratio %.1f %% \n", 
-                                recDesc, seqDesc, analyzedType, 1000*meanRoi, 1000*stdRoi, 100*stdRoi/meanRoi)
-                devRatios[r,case] = 100*stdRoi/meanRoi
-                meanRoiValues[r,case] = meanRoi
-            end
-            preMisRatios[1,case] = 100*(meanRoiValues[2,case] - meanRoiValues[1,case]) / meanRoiValues[1,case]
-        end
-        percDev[1,1,:] = 0.5 .* devRatios[1,:] .+ 0.5 .* devRatios[2,:] # collapsed the 'Pre' and 'Mis' deviations
-        percDev[1,2,:] =        devRatios[3,:]                          # assumed to refer to the 'Non' deviations
+        # for case in 1:nSeqs
+        #     seqDesc = figurePars["seqDescription"][case] 
+        #     for r in eachindex(figurePars["recDescription"])
+        #         recDesc = figurePars["recDescription"][r]
+        #         t2map   = mapSet[r][case,sliceRange,bothT1andT2,:,:] # FH, type, AP, LR
+        #         t2map   = permutedims(t2map,(2,1,3,4)) # type, FH, AP, LR
+        #         meanRoi = [mean(t2map[m,wmroi...]) for m in bothT1andT2] 
+        #         stdRoi  = [std(t2map[wmroi]) for m in bothT1andT2];
+        #         for m in bothT1andT2
+        #             @printf("For %s recon of %s sequence, mean T%1d is %.1f ms, dev is %.1f ms, ratio %.1f %% \n", 
+        #                             recDesc, seqDesc, m, 1000*meanRoi[m], 1000*stdRoi[m], 100*stdRoi[m]/meanRoi[m])
+        #             devRatios[r,case,m] = 100*stdRoi[m]/meanRoi[m]
+        #             meanRoiValues[r,case,m] = meanRoi[m]
+        #         end
+        #     end
+        #     # preMisRatios[1,case] = 100*(meanRoiValues[2,case] - meanRoiValues[1,case]) / meanRoiValues[1,case]
+        # end
+        # for m in bothT1andT2
+        #     percDev[1,1,:,m] = 0.5 .* devRatios[1,:,m] .+ 0.5 .* devRatios[2,:,m] # collapsed the 'Pre' and 'Mis' deviations
+        #     percDev[1,2,:,m] =        devRatios[3,:,m]                            # assumed to refer to the 'Non' deviations
+        # end
 
         wmroi = figurePars["wmroi"]                     # FH, AP, LR
         B1map = figurePars["dreamSet"][1][2,:,:,:]      # AP, LR, FH
@@ -77,18 +85,20 @@ for volunteer in 1:2
             seqDesc = figurePars["seqDescription"][case] 
             for r in eachindex(figurePars["recDescription"])
                 recDesc = figurePars["recDescription"][r]
-                smoothRoi = SmoothOverMask(case, r, figurePars, analyzedType)
-                meanRoi = mean(smoothRoi[wmroi])
-                stdRoi  = std(smoothRoi[wmroi]);
-                @printf("For %s recon of %s sequence, mean T%1d is %.1f ms, dev is %.1f ms, ratio %.1f %% \n", 
-                                recDesc, seqDesc, analyzedType, 1000*meanRoi, 1000*stdRoi, 100*stdRoi/meanRoi)
-                devRatios[r,case] = 100*stdRoi/meanRoi
-                meanRoiValues[r,case] = meanRoi
+                for m in bothT1andT2
+                    smoothRoi = SmoothOverMask(case, r, figurePars, m)
+                    meanRoi[m] = mean(smoothRoi[wmroi])
+                    stdRoi[m]  = std(smoothRoi[wmroi]);
+                    @printf("For %s recon of %s sequence, mean T%1d is %.1f ms, dev is %.1f ms, ratio %.1f %% \n", 
+                                    recDesc, seqDesc, m, 1000*meanRoi[m], 1000*stdRoi[m], 100*stdRoi[m]/meanRoi[m])
+                    devRatios[r,case,m] = 100*stdRoi[m]/meanRoi[m]
+                    meanRoiValues[r,case,m] = meanRoi[m]
+                end
             end
-            preMisRatios[2,case] = 100*(meanRoiValues[2,case] - meanRoiValues[1,case]) / meanRoiValues[1,case]
+            # preMisRatios[2,case] = 100*(meanRoiValues[2,case] - meanRoiValues[1,case]) / meanRoiValues[1,case]
         end
-        percDev[2,1,:] = 0.5 .* devRatios[1,:] .+ 0.5 .* devRatios[2,:] # collapsed the 'Pre' and 'Mis' deviations
-        percDev[2,2,:] =        devRatios[3,:]                          # assumed to refer to the 'Non' deviations
+        # percDev[2,1,:] = 0.5 .* devRatios[1,:] .+ 0.5 .* devRatios[2,:] # collapsed the 'Pre' and 'Mis' deviations
+        # percDev[2,2,:] =        devRatios[3,:]                          # assumed to refer to the 'Non' deviations
 
         # plotting of a smoothed deviation graph
         # figure()
@@ -185,17 +195,20 @@ end
 meanRoiGM = (meanRoiValuesCollection[1] .+ meanRoiValuesCollection[3]) ./ 2.0
 meanRoiWM = (meanRoiValuesCollection[2] .+ meanRoiValuesCollection[4]) ./ 2.0
 
-fig,ax = subplots(1,1,figsize=(6,6))
-ax.set_ylim(0,30)
-xticks([0,1,2],figurePars["recDescription"])
-for case in 1:4
-    ax.plot(devRatiosMean[:,case], label=figurePars["seqDescription"][case], marker=".",markersize=20)
-end
-ax.set_ylabel("relative standard dev [%]")
-ax.legend()
+fig,ax = subplots(1,2,figsize=(12,6))
+fig.subplots_adjust(wspace=0.4)
+for m in bothT1andT2
+    ax[m].set_ylim(0,30)
+    ax[m].set_xticks([0,1,2],figurePars["recDescription"])
+    for case in 1:4
+        ax[m].plot(devRatiosMean[:,case,m], label=figurePars["seqDescription"][case], marker=".",markersize=20)
+    end
+    ax[m].set_ylabel("relative standard dev [%] in T$m")
+    ax[m].legend()
 
-@show meanRoiGM[1,:]
-@show meanRoiWM[1,:]
-# Mis-Pre 
-@show (meanRoiGM[2,:].-meanRoiGM[1,:])./meanRoiGM[1,:]./0.05
-@show (meanRoiWM[2,:].-meanRoiWM[1,:])./meanRoiWM[1,:]./0.05
+    @show meanRoiGM[1,:,m]
+    @show meanRoiWM[1,:,m]
+    # Mis-Pre 
+    @show (meanRoiGM[2,:,m].-meanRoiGM[1,:,m])./meanRoiGM[1,:,m]./0.05
+    @show (meanRoiWM[2,:,m].-meanRoiWM[1,:,m])./meanRoiWM[1,:,m]./0.05
+end
