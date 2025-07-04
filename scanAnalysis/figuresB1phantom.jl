@@ -149,6 +149,7 @@ function figureSequence2by2(figurePars)
     for c in 1:2
         ax_seqs[1,c].set_xticks([])
     end
+    ax_seqs[1,1].legend()
 
     rowLabels = ["Amplitude-only", "Amplitude+phase"]
     colLabels = ["noise-optimized","B1-insensitivity-optimized"]
@@ -157,6 +158,16 @@ function figureSequence2by2(figurePars)
     end
     for i in 1:2
         fig_seqs.text(0.25 + (i - 1) * 0.5, 0.90, colLabels[i], va="center", ha="center", fontsize=14)
+    end
+
+    # add ky=0 markers
+    for r in 1:2
+        for c in 1:2
+            for i in 1:6
+                ky = 112 + (i-1)*224
+                ax_seqs[r,c].plot([ky,ky],[-5,40], color="gray", linestyle="--", linewidth=0.5)
+            end
+        end
     end
 end
 
