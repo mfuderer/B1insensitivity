@@ -209,6 +209,8 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false, type=2) #T2 b
     end
 
     fig,ax = subplots(1,3,figsize=(12,4))
+    fig.subplots_adjust(left=0.08, right=0.92)  # Reduce margins
+
     markers = ["o","x","+"]
     reconNames = recDescription
 
@@ -270,10 +272,17 @@ function figuresPhantomBias(figurePars, diffusion_corrected=false, type=2) #T2 b
     for i in 1:3 
         ax[i].set_ylim(-22.0,53.0)
     end
-    yPositions = [24,32,39] # [9,12,9]
+    yPositions = [1 4 7; 24 32 37] # [9,12,9]
     for recType in eachindex(recDescription)
-        ax[3].text(spacer*(recType-1)-1.4,yPositions[recType],recDescription[recType], fontsize=8)
+        ax[3].text(spacer*(recType-1)-1.4,yPositions[m,recType],recDescription[recType], fontsize=8)
     end
+
+    # Add only horizontal gridlines
+    for i in 1:3
+        ax[i].set_yticks(-20:10:50)  
+        ax[i].grid(true, axis="y")
+    end     
+
 end
 
 function figureAllIm(figurePars)

@@ -103,6 +103,7 @@ startstate          = -1
 lines_color_cycle = [p["color"] for p in plt.rcParams["axes.prop_cycle"]]
 
 fig,axd=subplots(1,2,figsize=(12,5))
+fig.subplots_adjust(left=0.08, right=0.92, top=0.92)  # Reduce margins
 
 slopes = zeros(2,length(cases))
 plotmin = 200.0; plotmax=-200.0      # for equal value range of two plots
@@ -213,5 +214,11 @@ for m in 1:2
     axd[m].set_xlabel("value of $(recon_options["simulationVariable"])")
     axd[m].set_ylabel("bias on T$m [%]")
     axd[m].set_ylim(plotmin,plotmax)  # Set y-axis range here
+    axd[m].grid(true, axis="y")        # Add only horizontal gridlines
+    # For the second subplot, put ylabels and yticks on the right
+    if m == 2
+        axd[m].yaxis.set_label_position("right")
+        axd[m].yaxis.tick_right()
+    end
     @show slopes[m,:]
 end
